@@ -13,7 +13,3 @@ description = "Progetta il giardino dei tuoi sogni con l'intelligenza artificial
 default_theme = "light"
 show_readme_as_default = false
 hide_cot = true
-
-# Permetti embedding come widget
-[features.copilot]
-enabled = true
