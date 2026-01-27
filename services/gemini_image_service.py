@@ -124,11 +124,11 @@ Il risultato deve sembrare una foto professionale di architettura del paesaggio.
         if not self.chat_history:
             contents.append(types.Content(
                 role="user",
-                parts=[types.Part.from_text(f"[SYSTEM]: {self.CHAT_SYSTEM_PROMPT}")]
+                parts=[types.Part.from_text(text=f"[SYSTEM]: {self.CHAT_SYSTEM_PROMPT}")]
             ))
             contents.append(types.Content(
                 role="model",
-                parts=[types.Part.from_text("Capito, sono pronto ad aiutare come consulente di garden design.")]
+                parts=[types.Part.from_text(text="Capito, sono pronto ad aiutare come consulente di garden design.")]
             ))
 
         # Aggiungi history
@@ -146,7 +146,7 @@ Il risultato deve sembrare una foto professionale di architettura del paesaggio.
                 mime_type="image/jpeg"
             ))
 
-        parts.append(types.Part.from_text(message))
+        parts.append(types.Part.from_text(text=message))
 
         contents.append(types.Content(role="user", parts=parts))
 
@@ -166,7 +166,7 @@ Il risultato deve sembrare una foto professionale di architettura del paesaggio.
         self.chat_history.append(types.Content(role="user", parts=parts))
         self.chat_history.append(types.Content(
             role="model",
-            parts=[types.Part.from_text(response_text)]
+            parts=[types.Part.from_text(text=response_text)]
         ))
 
         return response_text
@@ -232,7 +232,7 @@ scattata con una Canon EOS 5D, luce naturale {lighting}.
         # Genera immagine con Gemini
         contents = [
             types.Part.from_bytes(data=image_data, mime_type="image/jpeg"),
-            types.Part.from_text(prompt)
+            types.Part.from_text(text=prompt)
         ]
 
         response = self.client.models.generate_content(
@@ -271,7 +271,7 @@ IMPORTANTE:
 
         contents = [
             types.Part.from_bytes(data=self.current_image, mime_type="image/jpeg"),
-            types.Part.from_text(prompt)
+            types.Part.from_text(text=prompt)
         ]
 
         response = self.client.models.generate_content(
@@ -310,7 +310,7 @@ Rispondi in italiano in modo chiaro e strutturato."""
 
         contents = [
             types.Part.from_bytes(data=image_data, mime_type="image/jpeg"),
-            types.Part.from_text(prompt)
+            types.Part.from_text(text=prompt)
         ]
 
         response = self.client.models.generate_content(
