@@ -1,7 +1,11 @@
 """
 Servizio Gemini per Image Generation/Editing
 
-Usa Gemini 2.5 Flash Image (Nano Banana) per:
+Modelli (Gennaio 2026):
+- gemini-3-flash-preview: Chat veloce (Gemini 3 Flash)
+- gemini-3-pro-image-preview: Image generation (Nano Banana Pro)
+
+Funzionalità:
 - Analizzare foto di giardini
 - Generare rendering modificando SOLO il landscape
 - Preservare casa, muri, strutture esistenti
@@ -20,9 +24,9 @@ class GeminiImageService:
     """
     Servizio unificato per chat + image editing con Gemini.
 
-    Modelli utilizzati:
-    - gemini-2.5-flash: Chat veloce con l'utente
-    - gemini-2.5-flash-preview-image: Generazione/editing immagini (Nano Banana)
+    Modelli utilizzati (Gennaio 2026):
+    - gemini-3-flash-preview: Chat veloce con l'utente (Gemini 3 Flash)
+    - gemini-3-pro-image-preview: Generazione/editing immagini (Nano Banana Pro)
     """
 
     def __init__(self, api_key: str):
@@ -34,9 +38,11 @@ class GeminiImageService:
         """
         self.client = genai.Client(api_key=api_key)
 
-        # Modelli
-        self.chat_model = "gemini-2.5-flash-preview-04-17"
-        self.image_model = "gemini-2.5-flash-preview-04-17"  # Supporta image generation
+        # Modelli - Aggiornati a Gennaio 2026
+        # gemini-3-flash-preview: Chat veloce con thinking minimo
+        # gemini-3-pro-image-preview: Nano Banana Pro per image generation
+        self.chat_model = "gemini-3-flash-preview"  # Gemini 3 Flash per chat
+        self.image_model = "gemini-3-pro-image-preview"  # Nano Banana Pro per image generation
 
         # Chat session per conversazione multi-turn
         self.chat_history = []
