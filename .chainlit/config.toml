@@ -1,0 +1,45 @@
+# Chainlit Configuration
+# https://docs.chainlit.io/customisation/config
+
+[project]
+# Mostra il pulsante GitHub
+enable_telemetry = false
+
+[features]
+# Abilita upload di immagini
+multi_modal = true
+
+# Abilita audio (disabilitato per ora)
+audio = { enabled = false }
+
+# Mostra prompt playground
+prompt_playground = false
+
+# Abilita feedback utente
+feedback = true
+
+# Abilita history
+remember_history = true
+
+[UI]
+# Nome dell'app
+name = "Garden Design AI"
+
+# Descrizione
+description = "Progetta il giardino dei tuoi sogni con l'intelligenza artificiale"
+
+# Tema
+default_theme = "light"
+
+# Mostra readme on start
+show_readme_as_default = false
+
+# Nascondi logo Chainlit
+hide_cot = true
+
+# Colore primario (verde natura)
+# primary_color = "#228B22"
+
+[meta]
+# Metadati SEO
+generated_by = "Automato AI"

@@ -1,0 +1,17 @@
+# Landscaping Design Bot - Dependencies
+# Usa SOLO Gemini (no Replicate/Flux)
+
+# Chat Interface
+chainlit>=1.0.0
+
+# Google Gemini AI (Chat + Image Generation)
+google-genai>=1.0.0
+
+# HTTP Client
+httpx>=0.27.0
+
+# Image Processing
+Pillow>=10.0.0
+
+# Environment Variables
+python-dotenv>=1.0.0
