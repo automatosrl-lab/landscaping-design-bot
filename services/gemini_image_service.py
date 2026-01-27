@@ -40,9 +40,9 @@ class GeminiImageService:
 
         # Modelli - Aggiornati a Gennaio 2026
         # gemini-3-flash-preview: Chat veloce con thinking minimo
-        # gemini-3-pro-image-preview: Nano Banana Pro per image generation
+        # gemini-2.5-flash-image: Nano Banana (più quota gratuita disponibile)
         self.chat_model = "gemini-3-flash-preview"  # Gemini 3 Flash per chat
-        self.image_model = "gemini-3-pro-image-preview"  # Nano Banana Pro per image generation
+        self.image_model = "gemini-2.5-flash-image"  # Nano Banana per image generation (più quota)
 
         # Chat session per conversazione multi-turn
         self.chat_history = []
