@@ -14,7 +14,6 @@ from google.genai import types
 import base64
 import httpx
 from typing import Optional, List
-import io
 
 
 class GeminiImageService:
