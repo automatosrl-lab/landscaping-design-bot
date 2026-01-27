@@ -92,7 +92,7 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
    - Le fondamenta e strutture architettoniche
    - {preserve_elements}
 
-2. **MODIFICA SOLO** l'area del giardino/landscape:
+2. **AGGIUNGI SOLO QUESTI ELEMENTI** (nient'altro!):
    {modifications}
 
 3. **STILE RICHIESTO**: {style}
@@ -105,9 +105,10 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
 ## DESCRIZIONE DETTAGLIATA DEL NUOVO GIARDINO:
 {detailed_description}
 
-IMPORTANTE: La casa e le strutture esistenti devono rimanere IDENTICHE.
-Modifica SOLO il giardino, il prato, le piante e gli elementi esterni del landscape.
-Il risultato deve sembrare una foto professionale di architettura del paesaggio."""
+## REGOLE FINALI OBBLIGATORIE:
+- La casa e le strutture esistenti devono rimanere IDENTICHE
+- Aggiungi SOLO gli elementi elencati sopra, nient'altro
+- Il risultato deve sembrare una foto professionale di architettura del paesaggio"""
 
     # =========================================================================
     # CHAT METHODS

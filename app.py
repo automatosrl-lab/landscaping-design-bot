@@ -76,7 +76,9 @@ async def on_chat_start():
     cl.user_session.set("state", SessionState.WELCOME)
     cl.user_session.set("uploaded_image", None)
     cl.user_session.set("style", None)
-    cl.user_session.set("elements", [])
+    cl.user_session.set("elements", [])  # Elementi DA aggiungere
+    cl.user_session.set("excluded", [])  # Elementi DA ESCLUDERE
+    cl.user_session.set("user_description", "")  # Descrizione originale utente
     cl.user_session.set("preserve", [])
 
     # Messaggio di benvenuto
@@ -225,35 +227,96 @@ Descrivi liberamente cosa desideri!
 
     # Se stiamo raccogliendo elementi
     if state == SessionState.COLLECTING_ELEMENTS:
-        # Rileva elementi menzionati
+        # Salva la descrizione originale dell'utente
+        cl.user_session.set("user_description", user_message)
+
+        # Keywords per rilevare elementi
         element_keywords = {
             "piscina": ["piscina", "pool", "vasca"],
-            "prato verde": ["prato", "erba", "lawn", "verde"],
-            "vialetto in pietra naturale": ["vialetto", "sentiero", "percorso", "camminamento"],
-            "pergola con rampicanti": ["pergola", "gazebo", "tettoia"],
-            "piante e fiori": ["piante", "fiori", "alberi", "siepe", "vegetazione"],
-            "illuminazione da giardino": ["illuminazione", "luci", "lampioni", "faretti"],
-            "fontana decorativa": ["fontana", "acqua", "cascata"],
-            "area barbecue": ["bbq", "barbecue", "cucina", "grill"],
-            "area relax con sedute": ["relax", "sedute", "divano", "lounge", "salotto"]
+            "prato": ["prato", "erba", "lawn"],
+            "vialetto": ["vialetto", "sentiero", "percorso", "camminamento", "yaya"],
+            "pergola": ["pergola", "gazebo", "tettoia"],
+            "piante": ["piante", "fiori", "alberi", "palme", "tropicali"],
+            "illuminazione": ["illuminazione", "luci", "lampioni", "faretti"],
+            "fontana": ["fontana", "cascata"],
+            "barbecue": ["bbq", "barbecue", "grill"],
+            "relax": ["relax", "sedute", "divano", "lounge", "salotto"]
         }
 
-        detected_elements = []
-        for element, keywords in element_keywords.items():
-            if any(kw in user_lower for kw in keywords):
-                detected_elements.append(element)
+        # Parole che indicano esclusione
+        negative_words = ["niente", "no ", "non ", "senza", "nessun", "escludi", "evita"]
 
-        # Aggiungi elementi rilevati
-        current_elements = cl.user_session.get("elements", [])
-        current_elements.extend(detected_elements)
-        # Rimuovi duplicati mantenendo ordine
-        current_elements = list(dict.fromkeys(current_elements))
-        cl.user_session.set("elements", current_elements)
+        detected_elements = []
+        excluded_elements = []
+
+        # Analizza frase per frase (separando per punto o virgola)
+        phrases = user_lower.replace(",", ".").split(".")
+
+        for phrase in phrases:
+            phrase = phrase.strip()
+            if not phrase:
+                continue
+
+            # Verifica se la frase è negativa
+            is_negative = any(neg in phrase for neg in negative_words)
+
+            for element, keywords in element_keywords.items():
+                if any(kw in phrase for kw in keywords):
+                    if is_negative:
+                        excluded_elements.append(element)
+                    else:
+                        # Cattura anche i dettagli specifici
+                        if element == "piscina":
+                            if "rettangol" in phrase:
+                                detected_elements.append("piscina rettangolare")
+                            elif "rotonda" in phrase or "ovale" in phrase:
+                                detected_elements.append("piscina ovale")
+                            else:
+                                detected_elements.append("piscina")
+                        elif element == "prato":
+                            if "inglese" in phrase:
+                                detected_elements.append("prato all'inglese")
+                            elif "sintetico" in phrase:
+                                detected_elements.append("prato sintetico")
+                            else:
+                                detected_elements.append("prato verde")
+                        elif element == "vialetto":
+                            if "yaya" in phrase:
+                                detected_elements.append("vialetti in pietra yaya")
+                            elif "pietra" in phrase:
+                                detected_elements.append("vialetti in pietra naturale")
+                            elif "legno" in phrase:
+                                detected_elements.append("vialetti in legno")
+                            else:
+                                detected_elements.append("vialetti")
+                        elif element == "piante":
+                            if "tropical" in phrase or "palme" in phrase:
+                                detected_elements.append("piante tropicali con palme")
+                            else:
+                                detected_elements.append("piante e fiori")
+                        elif element == "illuminazione":
+                            if "lieve" in phrase or "soft" in phrase or "discret" in phrase:
+                                detected_elements.append("illuminazione discreta e lieve")
+                            else:
+                                detected_elements.append("illuminazione da giardino")
+                        else:
+                            detected_elements.append(element)
+
+        # Rimuovi duplicati
+        detected_elements = list(dict.fromkeys(detected_elements))
+        excluded_elements = list(dict.fromkeys(excluded_elements))
+
+        cl.user_session.set("elements", detected_elements)
+        cl.user_session.set("excluded", excluded_elements)
 
         # Chiedi conferma per generare
-        if current_elements:
+        if detected_elements or excluded_elements:
             style = cl.user_session.get("style", "modern")
-            elements_list = "\n".join([f"  • {el}" for el in current_elements])
+
+            elements_list = "\n".join([f"  ✅ {el}" for el in detected_elements]) if detected_elements else "  (nessuno specificato)"
+            excluded_list = "\n".join([f"  ❌ {el}" for el in excluded_elements]) if excluded_elements else ""
+
+            excluded_section = f"\n\n**Elementi ESCLUSI (non verranno aggiunti):**\n{excluded_list}" if excluded_elements else ""
 
             await cl.Message(
                 content=f"""📋 **Riepilogo del tuo progetto:**
@@ -261,7 +324,7 @@ Descrivi liberamente cosa desideri!
 **Stile:** {style.title()}
 
 **Elementi da aggiungere:**
-{elements_list}
+{elements_list}{excluded_section}
 
 **Da preservare:** Casa e strutture esistenti
 
@@ -310,6 +373,16 @@ async def generate_rendering():
 
     style = cl.user_session.get("style", "modern")
     elements = cl.user_session.get("elements", ["prato verde", "piante decorative"])
+    excluded = cl.user_session.get("excluded", [])
+    user_description = cl.user_session.get("user_description", "")
+
+    # Costruisci note aggiuntive con esclusioni
+    additional = f"Stile {style} con focus su estetica professionale."
+    if excluded:
+        excluded_text = ", ".join(excluded)
+        additional += f"\n\nIMPORTANTE - NON AGGIUNGERE ASSOLUTAMENTE: {excluded_text}. Il cliente ha esplicitamente richiesto di NON includere questi elementi."
+    if user_description:
+        additional += f"\n\nRichiesta originale del cliente: {user_description}"
 
     # Status message
     status = await cl.Message(content="🎨 **Generazione rendering in corso...**\n\nSto trasformando il tuo giardino mantenendo la casa e le strutture esistenti...").send()
@@ -322,7 +395,7 @@ async def generate_rendering():
             modifications=elements,
             preserve_elements=["alberi esistenti da preservare"],
             lighting="golden hour, tardo pomeriggio",
-            additional_notes=f"Stile {style} con focus su estetica professionale"
+            additional_notes=additional
         )
 
         # Salva immagine generata in file temporaneo
