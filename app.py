@@ -140,30 +140,26 @@ async def handle_image_upload(service: GeminiImageService, image_data: bytes, us
     """Gestisce il caricamento di un'immagine."""
 
     # Notifica ricezione
-    status = await cl.Message(content="📸 **Foto ricevuta!** Sto analizzando il tuo spazio...").send()
+    status = await cl.Message(content="📸 **Foto ricevuta!**").send()
 
     try:
-        # Analizza l'immagine
+        # Analizza l'immagine INTERNAMENTE (non mostrare all'utente)
         analysis = await service.analyze_garden(image_data)
+        # Salva l'analisi per uso interno nel prompt
+        cl.user_session.set("photo_analysis", analysis['analysis'])
 
-        # Mostra analisi
+        # Chiedi direttamente cosa vuole l'utente
         await cl.Message(
-            content=f"""✅ **Analisi completata!**
+            content="""Perfetto! Ho analizzato il tuo spazio.
 
-{analysis['analysis']}
+**Che tipo di giardino vorresti?** Scegli uno stile:
 
----
-
-**Ora dimmi:** Che tipo di giardino vorresti? Scegli uno stile:
-
-• 🏛️ **Moderno** - Linee pulite, minimalista, contemporaneo
-• 🌿 **Mediterraneo** - Ulivi, lavanda, terracotta, caldo
-• 🌴 **Tropicale** - Palme, piante esotiche, lussureggiante
-• ☯️ **Zen** - Giapponese, sereno, ghiaia, bambù
-• 🌹 **Inglese** - Romantico, fiori, rose, classico
-• 🔥 **Contemporaneo** - Outdoor living, cucina esterna, fire pit
-
-Scrivi lo stile che preferisci!
+• 🏛️ **Moderno** - Linee pulite, minimalista
+• 🌿 **Mediterraneo** - Ulivi, lavanda, caldo
+• 🌴 **Tropicale** - Palme, piante esotiche
+• ☯️ **Zen** - Giapponese, sereno
+• 🌹 **Inglese** - Romantico, fiori, rose
+• 🔥 **Contemporaneo** - Outdoor living, fire pit
 """
         ).send()
 
@@ -174,7 +170,7 @@ Scrivi lo stile che preferisci!
             await handle_chat(service, user_message)
 
     except Exception as e:
-        await cl.Message(content=f"❌ Errore nell'analisi: {e}").send()
+        await cl.Message(content=f"❌ Errore: {e}").send()
 
 
 async def handle_chat(service: GeminiImageService, user_message: str):
@@ -229,114 +225,49 @@ Descrivi liberamente cosa desideri!
     if state == SessionState.COLLECTING_ELEMENTS:
         # Salva la descrizione originale dell'utente
         cl.user_session.set("user_description", user_message)
+        style = cl.user_session.get("style", "modern")
 
-        # Keywords per rilevare elementi
-        element_keywords = {
-            "piscina": ["piscina", "pool", "vasca"],
-            "prato": ["prato", "erba", "lawn"],
-            "vialetto": ["vialetto", "sentiero", "percorso", "camminamento", "yaya"],
-            "pergola": ["pergola", "gazebo", "tettoia"],
-            "piante": ["piante", "fiori", "alberi", "palme", "tropicali"],
-            "illuminazione": ["illuminazione", "luci", "lampioni", "faretti"],
-            "fontana": ["fontana", "cascata"],
-            "barbecue": ["bbq", "barbecue", "grill"],
-            "relax": ["relax", "sedute", "divano", "lounge", "salotto"]
-        }
+        # Usa l'AI per interpretare la richiesta
+        status_msg = await cl.Message(content="🤔 Sto elaborando la tua richiesta...").send()
 
-        # Parole che indicano esclusione
-        negative_words = ["niente", "no ", "non ", "senza", "nessun", "escludi", "evita"]
+        try:
+            interpretation = await service.interpret_user_request(user_message, style)
 
-        detected_elements = []
-        excluded_elements = []
+            detected_elements = interpretation.get("elements", [])
+            excluded_elements = interpretation.get("excluded", [])
+            summary = interpretation.get("summary", "")
 
-        # Analizza frase per frase (separando per punto o virgola)
-        phrases = user_lower.replace(",", ".").split(".")
+            cl.user_session.set("elements", detected_elements)
+            cl.user_session.set("excluded", excluded_elements)
 
-        for phrase in phrases:
-            phrase = phrase.strip()
-            if not phrase:
-                continue
+            # Aggiorna messaggio status
+            status_msg.content = "✅ Ho capito!"
+            await status_msg.update()
 
-            # Verifica se la frase è negativa
-            is_negative = any(neg in phrase for neg in negative_words)
-
-            for element, keywords in element_keywords.items():
-                if any(kw in phrase for kw in keywords):
-                    if is_negative:
-                        excluded_elements.append(element)
-                    else:
-                        # Cattura anche i dettagli specifici
-                        if element == "piscina":
-                            if "rettangol" in phrase:
-                                detected_elements.append("piscina rettangolare")
-                            elif "rotonda" in phrase or "ovale" in phrase:
-                                detected_elements.append("piscina ovale")
-                            else:
-                                detected_elements.append("piscina")
-                        elif element == "prato":
-                            if "inglese" in phrase:
-                                detected_elements.append("prato all'inglese")
-                            elif "sintetico" in phrase:
-                                detected_elements.append("prato sintetico")
-                            else:
-                                detected_elements.append("prato verde")
-                        elif element == "vialetto":
-                            if "yaya" in phrase:
-                                detected_elements.append("vialetti in pietra yaya")
-                            elif "pietra" in phrase:
-                                detected_elements.append("vialetti in pietra naturale")
-                            elif "legno" in phrase:
-                                detected_elements.append("vialetti in legno")
-                            else:
-                                detected_elements.append("vialetti")
-                        elif element == "piante":
-                            if "tropical" in phrase or "palme" in phrase:
-                                detected_elements.append("piante tropicali con palme")
-                            else:
-                                detected_elements.append("piante e fiori")
-                        elif element == "illuminazione":
-                            if "lieve" in phrase or "soft" in phrase or "discret" in phrase:
-                                detected_elements.append("illuminazione discreta e lieve")
-                            else:
-                                detected_elements.append("illuminazione da giardino")
-                        else:
-                            detected_elements.append(element)
-
-        # Rimuovi duplicati
-        detected_elements = list(dict.fromkeys(detected_elements))
-        excluded_elements = list(dict.fromkeys(excluded_elements))
-
-        cl.user_session.set("elements", detected_elements)
-        cl.user_session.set("excluded", excluded_elements)
-
-        # Chiedi conferma per generare
-        if detected_elements or excluded_elements:
-            style = cl.user_session.get("style", "modern")
-
-            elements_list = "\n".join([f"  ✅ {el}" for el in detected_elements]) if detected_elements else "  (nessuno specificato)"
-            excluded_list = "\n".join([f"  ❌ {el}" for el in excluded_elements]) if excluded_elements else ""
-
-            excluded_section = f"\n\n**Elementi ESCLUSI (non verranno aggiunti):**\n{excluded_list}" if excluded_elements else ""
+            # Mostra riepilogo compatto
+            elements_list = "\n".join([f"  ✅ {el}" for el in detected_elements]) if detected_elements else "  (nessuno)"
+            excluded_section = ""
+            if excluded_elements:
+                excluded_list = "\n".join([f"  ❌ {el}" for el in excluded_elements])
+                excluded_section = f"\n\n**Non aggiungerò:**\n{excluded_list}"
 
             await cl.Message(
-                content=f"""📋 **Riepilogo del tuo progetto:**
+                content=f"""📋 **Riepilogo:**
 
 **Stile:** {style.title()}
 
-**Elementi da aggiungere:**
+**Aggiungerò:**
 {elements_list}{excluded_section}
 
-**Da preservare:** Casa e strutture esistenti
-
----
-
-Vuoi che generi il rendering? Scrivi **"genera"** o **"ok"** per procedere.
-
-Oppure aggiungi altri dettagli o modifiche!
+Scrivi **"ok"** per generare, oppure dimmi se vuoi modificare qualcosa.
 """
             ).send()
 
             cl.user_session.set("state", SessionState.READY_TO_GENERATE)
+            return
+
+        except Exception as e:
+            await cl.Message(content=f"❌ Errore nell'interpretazione: {e}").send()
             return
 
     # Trigger per generare

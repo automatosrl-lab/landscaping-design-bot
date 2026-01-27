@@ -331,6 +331,69 @@ Rispondi in italiano in modo chiaro e strutturato."""
         }
 
     # =========================================================================
+    # AI INTERPRETATION
+    # =========================================================================
+
+    async def interpret_user_request(self, user_message: str, style: str) -> dict:
+        """
+        Usa l'AI per interpretare la richiesta dell'utente e tradurla in parametri strutturati.
+
+        Returns:
+            dict con: elements (lista), excluded (lista), summary (stringa breve)
+        """
+        prompt = f"""Sei un assistente che interpreta le richieste di garden design.
+
+L'utente ha scelto lo stile: {style}
+
+L'utente ha scritto:
+"{user_message}"
+
+Analizza la richiesta e restituisci ESATTAMENTE in questo formato JSON (senza markdown, solo JSON puro):
+{{
+    "elements": ["elemento1 con dettagli", "elemento2 con dettagli"],
+    "excluded": ["elemento da non mettere", "altro elemento da escludere"],
+    "summary": "Riassunto breve di 1 riga"
+}}
+
+REGOLE:
+- In "elements" metti SOLO ciò che l'utente vuole aggiungere, con i dettagli specifici (es. "piscina rettangolare di medie dimensioni", "prato all'inglese", "vialetti in pietra yaya")
+- In "excluded" metti ciò che l'utente NON vuole (quando dice "niente", "no", "senza", ecc.)
+- Se l'utente dice "illuminazione lieve/discreta", scrivi "illuminazione discreta e soffusa"
+- In "summary" fai un riassunto breve per conferma
+
+Rispondi SOLO con il JSON, nient'altro."""
+
+        response = self.client.models.generate_content(
+            model=self.chat_model,
+            contents=[types.Part.from_text(text=prompt)],
+            config=types.GenerateContentConfig(
+                temperature=0.3,
+                max_output_tokens=500,
+            )
+        )
+
+        # Parse JSON dalla risposta
+        import json
+        try:
+            # Rimuovi eventuali markdown code blocks
+            text = response.text.strip()
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            text = text.strip()
+
+            result = json.loads(text)
+            return result
+        except json.JSONDecodeError:
+            # Fallback se il parsing fallisce
+            return {
+                "elements": [user_message],
+                "excluded": [],
+                "summary": user_message[:100]
+            }
+
+    # =========================================================================
     # UTILITY METHODS
     # =========================================================================
 
