@@ -235,6 +235,7 @@ Descrivi liberamente cosa desideri!
 
             detected_elements = interpretation.get("elements", [])
             excluded_elements = interpretation.get("excluded", [])
+            out_of_scope = interpretation.get("out_of_scope", [])
             summary = interpretation.get("summary", "")
 
             cl.user_session.set("elements", detected_elements)
@@ -244,8 +245,35 @@ Descrivi liberamente cosa desideri!
             status_msg.content = "✅ Ho capito!"
             await status_msg.update()
 
+            # Se ci sono richieste fuori ambito, avvisa l'utente
+            if out_of_scope:
+                out_of_scope_list = "\n".join([f"  • {item}" for item in out_of_scope])
+                await cl.Message(
+                    content=f"""⚠️ **Nota importante:**
+
+Sono un esperto di **garden design e landscaping**. Mi occupo esclusivamente della progettazione di giardini e spazi esterni.
+
+Non posso modificare:
+{out_of_scope_list}
+
+Queste modifiche richiedono un architetto o un professionista dell'edilizia.
+
+Posso però aiutarti a trasformare il tuo giardino! 🌿
+"""
+                ).send()
+
+            # Se non ci sono elementi validi da aggiungere
+            if not detected_elements:
+                await cl.Message(
+                    content="""Non ho trovato elementi di landscaping da aggiungere nella tua richiesta.
+
+Dimmi cosa vorresti nel tuo giardino: prato, piante, piscina, vialetti, fontane, illuminazione...
+"""
+                ).send()
+                return
+
             # Mostra riepilogo compatto
-            elements_list = "\n".join([f"  ✅ {el}" for el in detected_elements]) if detected_elements else "  (nessuno)"
+            elements_list = "\n".join([f"  ✅ {el}" for el in detected_elements])
             excluded_section = ""
             if excluded_elements:
                 excluded_list = "\n".join([f"  ❌ {el}" for el in excluded_elements])

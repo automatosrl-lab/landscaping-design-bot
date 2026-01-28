@@ -349,44 +349,48 @@ Rispondi in italiano in modo chiaro e strutturato."""
         Returns:
             dict con: elements (lista), excluded (lista), summary (stringa breve)
         """
-        prompt = f"""Sei un interprete ESPERTO di richieste per garden design. Devi capire ESATTAMENTE cosa l'utente vuole e cosa NON vuole.
+        prompt = f"""Sei un interprete ESPERTO di richieste per garden design e landscaping.
 
 STILE SCELTO: {style}
 
 RICHIESTA UTENTE:
 "{user_message}"
 
-REGOLE DI INTERPRETAZIONE (LEGGI CON MOLTA ATTENZIONE):
+## IL TUO COMPITO:
+Analizza la richiesta e traduci ESATTAMENTE quello che l'utente vuole in elementi per il giardino.
+Sii FEDELE alla richiesta: se chiede un "laghetto con pesci koi e ponte rosso", scrivi esattamente quello.
+
+## REGOLE:
 
 1. ELEMENTI DA AGGIUNGERE (metti in "elements"):
-   - Quando dice "voglio X", "sì X", "magari X", "un po' di X"
-   - Esempio: "Voglio un prato inglese" → elements: ["prato all'inglese"]
+   - Tutto ciò che l'utente vuole nel giardino
+   - Mantieni i dettagli specifici (colori, materiali, posizioni)
+   - Esempi:
+     * "laghetto con pesci koi" → "laghetto con pesci koi"
+     * "ponte di legno rosso" → "ponte di legno rosso in stile giapponese"
+     * "statua di Buddha" → "statua di Buddha"
+     * "albero di ciliegio" → "albero di ciliegio (sakura)"
 
 2. ELEMENTI DA ESCLUDERE (metti in "excluded"):
-   - Quando dice "niente X", "no X", "non serve X", "X no", "senza X", "non voglio X"
-   - Esempio: "Fontana no" → excluded: ["fontana"]
+   - Quando dice "niente X", "no X", "non voglio X", "senza X"
 
-3. REGOLA CRITICA - "SOLO X":
-   - Quando l'utente dice "solo X" o "solamente X", significa che vuole ESCLUSIVAMENTE quello
-   - DEVI escludere automaticamente TUTTO il resto
-   - Esempio: "solo prato e piante" →
-     elements: ["prato", "piante"]
-     excluded: ["vialetti", "pergola", "gazebo", "fontana", "illuminazione", "area barbecue", "sedute", "mobili da esterno"]
-   - Se dice "solo" DEVI aggiungere in excluded: vialetti, pergola, gazebo, fontana, illuminazione, area barbecue, sedute, mobili da esterno (tutto ciò che NON è menzionato)
+3. REGOLA "SOLO X":
+   - Se dice "solo X", escludi automaticamente tutto il resto
+   - excluded: ["vialetti", "pergola", "gazebo", "fontana", "illuminazione", "area barbecue", "sedute", "mobili"]
 
-4. ELEMENTI GIÀ ESISTENTI (NON mettere in nessuna lista):
-   - Quando dice "c'è già", "già c'è", "esiste già", "perché c'è"
+4. RICHIESTE FUORI AMBITO (metti in "out_of_scope"):
+   - Modifiche alla CASA (finestre, porte, tetto, facciata, colore muri della casa)
+   - Modifiche ARCHITETTONICHE (fondamenta, strutture, ampliamenti)
+   - Interni della casa
+   - Se l'utente chiede queste cose, mettile in "out_of_scope"
 
-5. DETTAGLI SPECIFICI:
-   - "piante carine basse, non alberi" → "piante basse decorative (no alberi)"
-   - "illuminazione molto lieve" → "illuminazione discreta e soffusa"
+5. ELEMENTI GIÀ ESISTENTI: se dice "c'è già", non mettere in nessuna lista
 
-IMPORTANTE: Se l'utente usa la parola "solo" o "solamente", DEVI riempire la lista "excluded" con tutti gli elementi NON menzionati!
-
-ANALIZZA LA RICHIESTA E RISPONDI SOLO CON QUESTO JSON (senza markdown):
+RISPONDI CON QUESTO JSON (senza markdown):
 {{
-    "elements": ["elemento1", "elemento2"],
-    "excluded": ["cosa non mettere 1", "cosa non mettere 2"],
+    "elements": ["elemento1 con dettagli", "elemento2 con dettagli"],
+    "excluded": ["cosa non mettere"],
+    "out_of_scope": ["richieste fuori ambito (casa, architettura)"],
     "summary": "Riassunto breve"
 }}"""
 
