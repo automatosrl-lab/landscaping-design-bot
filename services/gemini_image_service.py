@@ -85,34 +85,37 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
 
     IMAGE_EDITING_PROMPT_TEMPLATE = """Modifica questa immagine di un giardino/spazio esterno.
 
-## REGOLE ASSOLUTE - RISPETTA RIGOROSAMENTE:
+## REGOLE CRITICHE - RISPETTA RIGOROSAMENTE:
 
 ### 1. PRESERVA SENZA MODIFICHE:
 - La casa/edificio principale (forma, finestre, porte, tetto)
 - Le fondamenta e strutture architettoniche
 - {preserve_elements}
 
-### 2. AGGIUNGI ESCLUSIVAMENTE QUESTI ELEMENTI (NIENT'ALTRO):
+### 2. AGGIUNGI SOLO ED ESCLUSIVAMENTE QUESTI ELEMENTI:
 {modifications}
 
-### 3. NON AGGIUNGERE MAI:
-- Fontane (a meno che non sia nella lista sopra)
-- Gazebo o pergole (a meno che non sia nella lista sopra)
-- Area barbecue (a meno che non sia nella lista sopra)
-- Mobili da esterno extra non richiesti
-- Elementi decorativi non specificati
+### 3. VIETATO AGGIUNGERE (anche se sembrano adatti allo stile):
+- Vialetti o sentieri (SE NON nella lista sopra)
+- Gazebo, pergole, tettoie (SE NON nella lista sopra)
+- Fontane o elementi d'acqua (SE NON nella lista sopra)
+- Area barbecue o cucina esterna (SE NON nella lista sopra)
+- Sedute, divani, mobili da esterno (SE NON nella lista sopra)
+- Illuminazione (SE NON nella lista sopra)
+- QUALSIASI elemento non esplicitamente elencato al punto 2
 
 ### 4. STILE: {style}
+(Lo stile influenza SOLO l'aspetto degli elementi richiesti, NON aggiungere elementi tipici dello stile se non richiesti!)
 
 ### 5. QUALITÀ: Rendering fotorealistico professionale, illuminazione naturale ({lighting})
 
 {detailed_description}
 
-## ISTRUZIONI FINALI:
+## ISTRUZIONI FINALI OBBLIGATORIE:
 1. La casa DEVE rimanere IDENTICA
-2. Aggiungi SOLO e SOLTANTO gli elementi elencati al punto 2
-3. NON inventare elementi extra - segui la lista LETTERALMENTE
-4. Il risultato deve sembrare una foto professionale"""
+2. Aggiungi SOLO ED ESCLUSIVAMENTE gli elementi elencati al punto 2
+3. NON aggiungere NULLA che non sia nella lista - anche se "starebbe bene" o è tipico dello stile
+4. Se la lista dice solo "prato e piante", metti SOLO prato e piante, NIENT'ALTRO"""
 
     # =========================================================================
     # CHAT METHODS
@@ -353,33 +356,36 @@ STILE SCELTO: {style}
 RICHIESTA UTENTE:
 "{user_message}"
 
-REGOLE DI INTERPRETAZIONE (LEGGI CON ATTENZIONE):
+REGOLE DI INTERPRETAZIONE (LEGGI CON MOLTA ATTENZIONE):
 
 1. ELEMENTI DA AGGIUNGERE (metti in "elements"):
    - Quando dice "voglio X", "sì X", "magari X", "un po' di X"
    - Esempio: "Voglio un prato inglese" → elements: ["prato all'inglese"]
-   - Esempio: "vialetto in pietra sì" → elements: ["vialetti in pietra naturale"]
-   - Esempio: "sedute qualcuna sulla parte sinistra" → elements: ["alcune sedute/divanetti sul lato sinistro"]
 
 2. ELEMENTI DA ESCLUDERE (metti in "excluded"):
    - Quando dice "niente X", "no X", "non serve X", "X no", "senza X", "non voglio X"
    - Esempio: "Fontana no" → excluded: ["fontana"]
-   - Esempio: "niente pergola, niente gazebo" → excluded: ["pergola", "gazebo"]
-   - Esempio: "illuminazione non serve" → excluded: ["illuminazione"]
-   - Esempio: "Area barbecue no" → excluded: ["area barbecue"]
 
-3. ELEMENTI GIÀ ESISTENTI (NON mettere in nessuna lista):
+3. REGOLA CRITICA - "SOLO X":
+   - Quando l'utente dice "solo X" o "solamente X", significa che vuole ESCLUSIVAMENTE quello
+   - DEVI escludere automaticamente TUTTO il resto
+   - Esempio: "solo prato e piante" →
+     elements: ["prato", "piante"]
+     excluded: ["vialetti", "pergola", "gazebo", "fontana", "illuminazione", "area barbecue", "sedute", "mobili da esterno"]
+   - Se dice "solo" DEVI aggiungere in excluded: vialetti, pergola, gazebo, fontana, illuminazione, area barbecue, sedute, mobili da esterno (tutto ciò che NON è menzionato)
+
+4. ELEMENTI GIÀ ESISTENTI (NON mettere in nessuna lista):
    - Quando dice "c'è già", "già c'è", "esiste già", "perché c'è"
-   - Esempio: "non voglio piscina perché c'è già" → NON aggiungere piscina in nessuna lista
 
-4. CATTURA I DETTAGLI SPECIFICI:
+5. DETTAGLI SPECIFICI:
    - "piante carine basse, non alberi" → "piante basse decorative (no alberi)"
    - "illuminazione molto lieve" → "illuminazione discreta e soffusa"
-   - "piscina rettangolare non troppo grande" → "piscina rettangolare di dimensioni medie"
 
-ANALIZZA LA RICHIESTA PAROLA PER PAROLA E RISPONDI SOLO CON QUESTO JSON (senza markdown, senza spiegazioni):
+IMPORTANTE: Se l'utente usa la parola "solo" o "solamente", DEVI riempire la lista "excluded" con tutti gli elementi NON menzionati!
+
+ANALIZZA LA RICHIESTA E RISPONDI SOLO CON QUESTO JSON (senza markdown):
 {{
-    "elements": ["elemento1 con dettagli", "elemento2 con dettagli"],
+    "elements": ["elemento1", "elemento2"],
     "excluded": ["cosa non mettere 1", "cosa non mettere 2"],
     "summary": "Riassunto breve"
 }}"""
