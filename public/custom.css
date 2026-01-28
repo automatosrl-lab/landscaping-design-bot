@@ -79,88 +79,152 @@ textarea {
 }
 
 /* ============================================
-   SEND BUTTON - Automato Colors
+   SEND BUTTON - Automato Colors (AGGRESSIVE)
    ============================================ */
 
-/* LIGHT THEME: Deep Green background, Electric Mint arrow */
-button[type="submit"],
-button[id*="send"],
-button[aria-label*="send" i],
-button[aria-label*="invia" i],
-[class*="send-button"],
-[class*="sendButton"],
-[class*="SendButton"],
-.MuiIconButton-root[type="submit"],
-form button:last-of-type,
-[class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) {
-    background-color: #163F2D !important;
-    border-color: #163F2D !important;
-    background: #163F2D !important;
+/* Target ALL circular/icon buttons that could be send */
+/* LIGHT THEME: Deep Green background (#163F2D), Electric Mint arrow (#75FF94) */
+
+/* Primary accent color override - catches theme colors */
+:root {
+    --primary: #163F2D !important;
+    --primary-foreground: #75FF94 !important;
+    --accent: #163F2D !important;
+    --accent-foreground: #75FF94 !important;
 }
 
+/* Generic button overrides for send-like buttons */
+button[type="submit"],
+input[type="submit"],
+button[id*="send" i],
+button[id*="submit" i],
+button[aria-label*="send" i],
+button[aria-label*="invia" i],
+button[aria-label*="submit" i],
+button[title*="send" i],
+button[title*="invia" i],
+[class*="send" i],
+[class*="submit" i]:not(form),
+[role="button"][class*="send" i],
+.MuiIconButton-colorPrimary,
+.MuiButton-containedPrimary,
+/* Chainlit specific - target buttons near textarea */
+.step-input button,
+[class*="Input"] button,
+[class*="input"] button:not([class*="attach"]):not([class*="upload"]):not([class*="file"]),
+/* Target by position - rightmost button in input area */
+[class*="actions"] button:last-child,
+[class*="toolbar"] button:last-child {
+    background-color: #163F2D !important;
+    background: #163F2D !important;
+    border-color: #163F2D !important;
+    color: #75FF94 !important;
+}
+
+/* SVG icons inside send buttons */
 button[type="submit"] svg,
 button[type="submit"] svg *,
 button[type="submit"] path,
-button[id*="send"] svg,
-button[id*="send"] svg *,
+button[type="submit"] circle,
+button[type="submit"] line,
+button[type="submit"] polyline,
+button[type="submit"] polygon,
+input[type="submit"] ~ svg,
+button[id*="send" i] svg,
+button[id*="send" i] svg *,
 button[aria-label*="send" i] svg,
 button[aria-label*="send" i] svg *,
 button[aria-label*="invia" i] svg,
 button[aria-label*="invia" i] svg *,
-[class*="send-button"] svg,
-[class*="send-button"] svg *,
-[class*="sendButton"] svg,
-[class*="sendButton"] svg *,
-[class*="SendButton"] svg,
-[class*="SendButton"] svg *,
-[class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg,
-[class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg * {
+[class*="send" i] svg,
+[class*="send" i] svg *,
+[class*="submit" i] svg,
+[class*="submit" i] svg *,
+.step-input button svg,
+.step-input button svg *,
+[class*="Input"] button svg,
+[class*="Input"] button svg *,
+[class*="input"] button:not([class*="attach"]):not([class*="upload"]) svg,
+[class*="input"] button:not([class*="attach"]):not([class*="upload"]) svg *,
+[class*="actions"] button:last-child svg,
+[class*="actions"] button:last-child svg *,
+.MuiIconButton-colorPrimary svg,
+.MuiIconButton-colorPrimary svg * {
     fill: #75FF94 !important;
     color: #75FF94 !important;
     stroke: #75FF94 !important;
 }
 
+/* Hover states */
 button[type="submit"]:hover,
-button[id*="send"]:hover,
+button[id*="send" i]:hover,
 button[aria-label*="send" i]:hover,
-[class*="send-button"]:hover,
-[class*="sendButton"]:hover {
-    opacity: 0.9 !important;
+[class*="send" i]:hover {
+    opacity: 0.85 !important;
+    background-color: #1a4a35 !important;
 }
 
-/* DARK THEME: Electric Mint background, Deep Green arrow */
+/* ============================================
+   DARK THEME: Electric Mint bg, Deep Green arrow
+   ============================================ */
+
+[data-theme="dark"],
+.dark,
+[class*="dark"] {
+    --primary: #75FF94 !important;
+    --primary-foreground: #163F2D !important;
+    --accent: #75FF94 !important;
+    --accent-foreground: #163F2D !important;
+}
+
 [data-theme="dark"] button[type="submit"],
-[data-theme="dark"] button[id*="send"],
+[data-theme="dark"] input[type="submit"],
+[data-theme="dark"] button[id*="send" i],
+[data-theme="dark"] button[id*="submit" i],
 [data-theme="dark"] button[aria-label*="send" i],
 [data-theme="dark"] button[aria-label*="invia" i],
-[data-theme="dark"] [class*="send-button"],
-[data-theme="dark"] [class*="sendButton"],
-[data-theme="dark"] [class*="SendButton"],
-[data-theme="dark"] .MuiIconButton-root[type="submit"],
-[data-theme="dark"] form button:last-of-type,
-[data-theme="dark"] [class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) {
+[data-theme="dark"] button[title*="send" i],
+[data-theme="dark"] [class*="send" i],
+[data-theme="dark"] [class*="submit" i]:not(form),
+[data-theme="dark"] .MuiIconButton-colorPrimary,
+[data-theme="dark"] .MuiButton-containedPrimary,
+[data-theme="dark"] .step-input button,
+[data-theme="dark"] [class*="Input"] button,
+[data-theme="dark"] [class*="input"] button:not([class*="attach"]):not([class*="upload"]):not([class*="file"]),
+[data-theme="dark"] [class*="actions"] button:last-child,
+.dark button[type="submit"],
+.dark [class*="send" i],
+[class*="dark"] button[type="submit"],
+[class*="dark"] [class*="send" i] {
     background-color: #75FF94 !important;
-    border-color: #75FF94 !important;
     background: #75FF94 !important;
+    border-color: #75FF94 !important;
+    color: #163F2D !important;
 }
 
 [data-theme="dark"] button[type="submit"] svg,
 [data-theme="dark"] button[type="submit"] svg *,
 [data-theme="dark"] button[type="submit"] path,
-[data-theme="dark"] button[id*="send"] svg,
-[data-theme="dark"] button[id*="send"] svg *,
+[data-theme="dark"] button[id*="send" i] svg,
+[data-theme="dark"] button[id*="send" i] svg *,
 [data-theme="dark"] button[aria-label*="send" i] svg,
 [data-theme="dark"] button[aria-label*="send" i] svg *,
-[data-theme="dark"] button[aria-label*="invia" i] svg,
-[data-theme="dark"] button[aria-label*="invia" i] svg *,
-[data-theme="dark"] [class*="send-button"] svg,
-[data-theme="dark"] [class*="send-button"] svg *,
-[data-theme="dark"] [class*="sendButton"] svg,
-[data-theme="dark"] [class*="sendButton"] svg *,
-[data-theme="dark"] [class*="SendButton"] svg,
-[data-theme="dark"] [class*="SendButton"] svg *,
-[data-theme="dark"] [class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg,
-[data-theme="dark"] [class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg * {
+[data-theme="dark"] [class*="send" i] svg,
+[data-theme="dark"] [class*="send" i] svg *,
+[data-theme="dark"] [class*="submit" i] svg,
+[data-theme="dark"] [class*="submit" i] svg *,
+[data-theme="dark"] .step-input button svg,
+[data-theme="dark"] .step-input button svg *,
+[data-theme="dark"] [class*="Input"] button svg,
+[data-theme="dark"] [class*="Input"] button svg *,
+[data-theme="dark"] [class*="actions"] button:last-child svg,
+[data-theme="dark"] [class*="actions"] button:last-child svg *,
+[data-theme="dark"] .MuiIconButton-colorPrimary svg,
+[data-theme="dark"] .MuiIconButton-colorPrimary svg *,
+.dark button[type="submit"] svg,
+.dark button[type="submit"] svg *,
+.dark [class*="send" i] svg,
+.dark [class*="send" i] svg * {
     fill: #163F2D !important;
     color: #163F2D !important;
     stroke: #163F2D !important;
