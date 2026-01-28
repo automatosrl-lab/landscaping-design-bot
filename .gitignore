@@ -10,8 +10,8 @@ __pycache__/
 venv/
 ENV/
 
-# Chainlit
-.chainlit/translations/
+# Chainlit - let it auto-generate config
+.chainlit/
 .files/
 
 # IDE

@@ -1,6 +1,5 @@
 /*
  * Automato AI Branding - Garden Design Bot
- * Logo: Deep Green (light) / Pacific Mint (dark)
  */
 
 /* ============================================
@@ -10,76 +9,80 @@
 :root {
     --automato-deep-green: #0D5D4B;
     --automato-pacific-mint: #5EFFC0;
-    --automato-electric-mint: #00FF94;
-    --automato-graphite: #2D3436;
 }
 
 /* ============================================
-   HEADER LOGO - Replace Chainlit logo
+   LOGO POSITIONING - Higher above chat
    ============================================ */
 
-/* Hide default Chainlit text in header */
-header a[href="/"] > span {
-    font-size: 0 !important;
-    color: transparent !important;
+/* Move logo higher */
+header {
+    padding-top: 20px !important;
+    margin-bottom: 40px !important;
 }
 
-/* Show Automato logo as background */
+/* Logo area */
 header a[href="/"] {
-    display: flex !important;
-    align-items: center !important;
-    min-width: 160px !important;
-    min-height: 40px !important;
-    background-image: url('/public/logo_light.png') !important;
-    background-size: contain !important;
-    background-repeat: no-repeat !important;
-    background-position: left center !important;
-}
-
-/* Dark theme - Pacific Mint logo */
-[data-theme="dark"] header a[href="/"] {
-    background-image: url('/public/logo_dark.png') !important;
+    margin-bottom: 30px !important;
 }
 
 /* ============================================
-   BOT AVATAR - Social icon with A
+   REMOVE UNWANTED BOXES/BORDERS
    ============================================ */
 
-/* Avatar container - only target message avatars, not input buttons */
+/* Remove box around input area */
+.composer,
+[class*="composer"],
+[class*="input-container"],
+[class*="InputContainer"] {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* Keep only the textarea border */
+textarea {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+}
+
+[data-theme="dark"] textarea {
+    border-color: #444 !important;
+}
+
+/* Remove any outer boxes */
+.MuiPaper-root,
+[class*="Paper"] {
+    box-shadow: none !important;
+}
+
+/* ============================================
+   BOT AVATAR
+   ============================================ */
+
 .message-avatar {
     width: 40px !important;
     height: 40px !important;
-    min-width: 40px !important;
     border-radius: 50% !important;
-    overflow: hidden !important;
     background-image: url('/public/avatar.png') !important;
     background-size: cover !important;
     background-position: center !important;
 }
 
-/* Hide default avatar image inside message avatar */
 .message-avatar img {
     opacity: 0 !important;
 }
 
 /* ============================================
-   BUTTONS & ACCENTS
+   BUTTONS
    ============================================ */
 
-/* Send button - Deep Green - be specific to not affect attachment button */
 button[type="submit"] {
     background-color: var(--automato-deep-green) !important;
-    border-color: var(--automato-deep-green) !important;
 }
 
-button[type="submit"]:hover {
-    background-color: #0a4a3c !important;
-}
-
-/* Dark theme - Pacific Mint */
 [data-theme="dark"] button[type="submit"] {
     background-color: var(--automato-pacific-mint) !important;
-    border-color: var(--automato-pacific-mint) !important;
     color: #1A1A2E !important;
 }
 
@@ -87,59 +90,19 @@ button[type="submit"]:hover {
    HIDE CHAINLIT BRANDING
    ============================================ */
 
-/* Hide "Built with Chainlit" watermark - be specific */
-a[href*="chainlit.io"],
-span:has(> a[href*="chainlit"]) {
+a[href*="chainlit.io"] {
     display: none !important;
-    visibility: hidden !important;
 }
 
 /* ============================================
-   GENERAL STYLING
+   ENSURE ATTACHMENT BUTTON VISIBLE
    ============================================ */
 
-/* Primary color for links */
-a:not([href*="chainlit"]) {
-    color: var(--automato-deep-green);
-}
-
-[data-theme="dark"] a:not([href*="chainlit"]) {
-    color: var(--automato-pacific-mint);
-}
-
-/* Message styling */
-.message-content {
-    border-radius: 12px;
-}
-
-/* Input field focus */
-textarea:focus,
-input:focus {
-    border-color: var(--automato-deep-green) !important;
-    outline-color: var(--automato-deep-green) !important;
-}
-
-[data-theme="dark"] textarea:focus,
-[data-theme="dark"] input:focus {
-    border-color: var(--automato-pacific-mint) !important;
-    outline-color: var(--automato-pacific-mint) !important;
-}
-
-/* ============================================
-   ENSURE ATTACHMENT BUTTON IS VISIBLE
-   ============================================ */
-
-/* Make sure attachment/upload button is always visible */
-button[id*="attach"],
-button[aria-label*="attach"],
-button[aria-label*="Attach"],
-button[aria-label*="upload"],
-button[aria-label*="Upload"],
-button[aria-label*="file"],
-label[for*="upload"],
-.upload-button,
+button[aria-label*="ttach"],
+button[aria-label*="pload"],
 [class*="attach"],
-[class*="upload"] {
+[class*="upload"],
+label[for*="upload"] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
