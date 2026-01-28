@@ -1,0 +1,117 @@
+/*
+ * Automato AI Branding - Garden Design Bot
+ * Logo: Deep Green (light) / Pacific Mint (dark)
+ * Colors from Automato AI Visual Identity
+ */
+
+/* ============================================
+   HEADER LOGO
+   ============================================ */
+
+/* Light theme - Deep Green logo */
+[data-theme="light"] header .MuiTypography-root:first-child,
+header .MuiTypography-root:first-child {
+    background-image: url('/public/logo_light.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: left center;
+    padding-left: 180px;
+    color: transparent !important;
+    min-height: 40px;
+}
+
+/* Dark theme - Pacific Mint logo */
+[data-theme="dark"] header .MuiTypography-root:first-child {
+    background-image: url('/public/logo_dark.png');
+}
+
+/* ============================================
+   BOT AVATAR - Icon A
+   ============================================ */
+
+/* Light theme - Deep Green icon */
+[data-theme="light"] .message-avatar img,
+.message-avatar img {
+    content: url('/public/icon_light.png') !important;
+}
+
+/* Dark theme - Pacific Mint icon */
+[data-theme="dark"] .message-avatar img {
+    content: url('/public/icon_dark.png') !important;
+}
+
+/* Avatar styling */
+.message-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 8px !important;
+}
+
+.message-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+/* ============================================
+   BRAND COLORS
+   ============================================ */
+
+:root {
+    /* Automato AI Colors */
+    --automato-deep-green: #0D5D4B;
+    --automato-pacific-mint: #5EFFC0;
+    --automato-electric-mint: #00FF94;
+    --automato-graphite: #2D3436;
+}
+
+/* Light theme colors */
+[data-theme="light"] {
+    --primary: var(--automato-deep-green);
+}
+
+/* Dark theme colors */
+[data-theme="dark"] {
+    --primary: var(--automato-pacific-mint);
+}
+
+/* ============================================
+   BUTTONS & ACCENTS
+   ============================================ */
+
+/* Send button */
+[data-theme="light"] button[type="submit"],
+button[type="submit"] {
+    background-color: var(--automato-deep-green) !important;
+}
+
+[data-theme="dark"] button[type="submit"] {
+    background-color: var(--automato-pacific-mint) !important;
+    color: #1A1A2E !important;
+}
+
+button[type="submit"]:hover {
+    opacity: 0.9;
+}
+
+/* ============================================
+   MESSAGE STYLING
+   ============================================ */
+
+/* Bot messages - subtle brand accent */
+[data-theme="light"] .message-content {
+    border-left: 3px solid var(--automato-deep-green);
+}
+
+[data-theme="dark"] .message-content {
+    border-left: 3px solid var(--automato-pacific-mint);
+}
+
+/* ============================================
+   FOOTER / WATERMARK
+   ============================================ */
+
+/* Hide or style the Chainlit watermark */
+.watermark {
+    opacity: 0.5;
+}
