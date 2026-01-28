@@ -17,12 +17,18 @@ name = "Garden Design AI"
 show_readme_as_default = false
 description = "Trasforma il tuo giardino con l'intelligenza artificiale"
 default_theme = "light"
-hide_cot = false
+hide_cot = true
 custom_css = "/public/custom.css"
 default_expand_messages = true
 
-# Logo - Light theme: Deep Green, Dark theme: Pacific Mint
-custom_font = ""
+# Logo header - Automato
+custom_logo = "/public/logo_light.png"
+
+# Avatar del bot - icona social con A
+custom_bot_avatar = "/public/avatar.png"
+
+# Favicon
+favicon = "/public/favicon.png"
 
 [UI.theme]
 layout = "default"

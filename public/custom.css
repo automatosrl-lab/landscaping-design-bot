@@ -1,117 +1,145 @@
 /*
  * Automato AI Branding - Garden Design Bot
  * Logo: Deep Green (light) / Pacific Mint (dark)
- * Colors from Automato AI Visual Identity
  */
-
-/* ============================================
-   HEADER LOGO
-   ============================================ */
-
-/* Light theme - Deep Green logo */
-[data-theme="light"] header .MuiTypography-root:first-child,
-header .MuiTypography-root:first-child {
-    background-image: url('/public/logo_light.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: left center;
-    padding-left: 180px;
-    color: transparent !important;
-    min-height: 40px;
-}
-
-/* Dark theme - Pacific Mint logo */
-[data-theme="dark"] header .MuiTypography-root:first-child {
-    background-image: url('/public/logo_dark.png');
-}
-
-/* ============================================
-   BOT AVATAR - Icon A
-   ============================================ */
-
-/* Light theme - Deep Green icon */
-[data-theme="light"] .message-avatar img,
-.message-avatar img {
-    content: url('/public/icon_light.png') !important;
-}
-
-/* Dark theme - Pacific Mint icon */
-[data-theme="dark"] .message-avatar img {
-    content: url('/public/icon_dark.png') !important;
-}
-
-/* Avatar styling */
-.message-avatar {
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 8px !important;
-}
-
-.message-avatar img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain !important;
-}
 
 /* ============================================
    BRAND COLORS
    ============================================ */
 
 :root {
-    /* Automato AI Colors */
     --automato-deep-green: #0D5D4B;
     --automato-pacific-mint: #5EFFC0;
     --automato-electric-mint: #00FF94;
     --automato-graphite: #2D3436;
 }
 
-/* Light theme colors */
-[data-theme="light"] {
-    --primary: var(--automato-deep-green);
+/* ============================================
+   HEADER LOGO - Replace Chainlit logo
+   ============================================ */
+
+/* Hide default Chainlit text/logo */
+header a[href="/"] > span,
+header .MuiTypography-root {
+    font-size: 0 !important;
+    color: transparent !important;
 }
 
-/* Dark theme colors */
-[data-theme="dark"] {
-    --primary: var(--automato-pacific-mint);
+/* Show Automato logo as background */
+header a[href="/"] {
+    display: flex !important;
+    align-items: center !important;
+    min-width: 160px !important;
+    min-height: 40px !important;
+    background-image: url('/public/logo_light.png') !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: left center !important;
+}
+
+/* Dark theme - Pacific Mint logo */
+[data-theme="dark"] header a[href="/"] {
+    background-image: url('/public/logo_dark.png') !important;
+}
+
+/* ============================================
+   BOT AVATAR - Social icon with A
+   ============================================ */
+
+/* Replace bot avatar with Automato social icon */
+.message-avatar,
+.step-avatar,
+[class*="avatar"] img {
+    content: url('/public/avatar.png') !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: cover !important;
+}
+
+/* Avatar container */
+.message-avatar,
+.step-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    background-image: url('/public/avatar.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+}
+
+/* Hide default avatar image, use background */
+.message-avatar img,
+.step-avatar img {
+    opacity: 0 !important;
 }
 
 /* ============================================
    BUTTONS & ACCENTS
    ============================================ */
 
-/* Send button */
-[data-theme="light"] button[type="submit"],
-button[type="submit"] {
+/* Send button - Deep Green */
+button[type="submit"],
+.cl-send-button {
     background-color: var(--automato-deep-green) !important;
+    border-color: var(--automato-deep-green) !important;
 }
 
-[data-theme="dark"] button[type="submit"] {
+button[type="submit"]:hover,
+.cl-send-button:hover {
+    background-color: #0a4a3c !important;
+}
+
+/* Dark theme - Pacific Mint */
+[data-theme="dark"] button[type="submit"],
+[data-theme="dark"] .cl-send-button {
     background-color: var(--automato-pacific-mint) !important;
+    border-color: var(--automato-pacific-mint) !important;
     color: #1A1A2E !important;
 }
 
-button[type="submit"]:hover {
-    opacity: 0.9;
+/* ============================================
+   HIDE CHAINLIT BRANDING
+   ============================================ */
+
+/* Hide "Built with Chainlit" watermark */
+.watermark,
+[class*="watermark"],
+footer a[href*="chainlit"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 /* ============================================
-   MESSAGE STYLING
+   GENERAL STYLING
    ============================================ */
 
-/* Bot messages - subtle brand accent */
-[data-theme="light"] .message-content {
-    border-left: 3px solid var(--automato-deep-green);
+/* Primary color for links and accents */
+a {
+    color: var(--automato-deep-green);
 }
 
-[data-theme="dark"] .message-content {
-    border-left: 3px solid var(--automato-pacific-mint);
+[data-theme="dark"] a {
+    color: var(--automato-pacific-mint);
 }
 
-/* ============================================
-   FOOTER / WATERMARK
-   ============================================ */
+/* Message styling */
+.message-content {
+    border-radius: 12px;
+}
 
-/* Hide or style the Chainlit watermark */
-.watermark {
-    opacity: 0.5;
+/* Input field focus */
+textarea:focus,
+input:focus {
+    border-color: var(--automato-deep-green) !important;
+    outline-color: var(--automato-deep-green) !important;
+}
+
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] input:focus {
+    border-color: var(--automato-pacific-mint) !important;
+    outline-color: var(--automato-pacific-mint) !important;
 }
