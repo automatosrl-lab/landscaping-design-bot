@@ -83,31 +83,87 @@ textarea {
    ============================================ */
 
 /* LIGHT THEME: Deep Green background, Electric Mint arrow */
-button[type="submit"] {
-    background-color: var(--automato-deep-green) !important;
-    border-color: var(--automato-deep-green) !important;
+button[type="submit"],
+button[id*="send"],
+button[aria-label*="send" i],
+button[aria-label*="invia" i],
+[class*="send-button"],
+[class*="sendButton"],
+[class*="SendButton"],
+.MuiIconButton-root[type="submit"],
+form button:last-of-type,
+[class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) {
+    background-color: #163F2D !important;
+    border-color: #163F2D !important;
+    background: #163F2D !important;
 }
 
 button[type="submit"] svg,
-button[type="submit"] path {
-    fill: var(--automato-electric-mint) !important;
-    color: var(--automato-electric-mint) !important;
+button[type="submit"] svg *,
+button[type="submit"] path,
+button[id*="send"] svg,
+button[id*="send"] svg *,
+button[aria-label*="send" i] svg,
+button[aria-label*="send" i] svg *,
+button[aria-label*="invia" i] svg,
+button[aria-label*="invia" i] svg *,
+[class*="send-button"] svg,
+[class*="send-button"] svg *,
+[class*="sendButton"] svg,
+[class*="sendButton"] svg *,
+[class*="SendButton"] svg,
+[class*="SendButton"] svg *,
+[class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg,
+[class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg * {
+    fill: #75FF94 !important;
+    color: #75FF94 !important;
+    stroke: #75FF94 !important;
 }
 
-button[type="submit"]:hover {
+button[type="submit"]:hover,
+button[id*="send"]:hover,
+button[aria-label*="send" i]:hover,
+[class*="send-button"]:hover,
+[class*="sendButton"]:hover {
     opacity: 0.9 !important;
 }
 
 /* DARK THEME: Electric Mint background, Deep Green arrow */
-[data-theme="dark"] button[type="submit"] {
-    background-color: var(--automato-electric-mint) !important;
-    border-color: var(--automato-electric-mint) !important;
+[data-theme="dark"] button[type="submit"],
+[data-theme="dark"] button[id*="send"],
+[data-theme="dark"] button[aria-label*="send" i],
+[data-theme="dark"] button[aria-label*="invia" i],
+[data-theme="dark"] [class*="send-button"],
+[data-theme="dark"] [class*="sendButton"],
+[data-theme="dark"] [class*="SendButton"],
+[data-theme="dark"] .MuiIconButton-root[type="submit"],
+[data-theme="dark"] form button:last-of-type,
+[data-theme="dark"] [class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) {
+    background-color: #75FF94 !important;
+    border-color: #75FF94 !important;
+    background: #75FF94 !important;
 }
 
 [data-theme="dark"] button[type="submit"] svg,
-[data-theme="dark"] button[type="submit"] path {
-    fill: var(--automato-deep-green) !important;
-    color: var(--automato-deep-green) !important;
+[data-theme="dark"] button[type="submit"] svg *,
+[data-theme="dark"] button[type="submit"] path,
+[data-theme="dark"] button[id*="send"] svg,
+[data-theme="dark"] button[id*="send"] svg *,
+[data-theme="dark"] button[aria-label*="send" i] svg,
+[data-theme="dark"] button[aria-label*="send" i] svg *,
+[data-theme="dark"] button[aria-label*="invia" i] svg,
+[data-theme="dark"] button[aria-label*="invia" i] svg *,
+[data-theme="dark"] [class*="send-button"] svg,
+[data-theme="dark"] [class*="send-button"] svg *,
+[data-theme="dark"] [class*="sendButton"] svg,
+[data-theme="dark"] [class*="sendButton"] svg *,
+[data-theme="dark"] [class*="SendButton"] svg,
+[data-theme="dark"] [class*="SendButton"] svg *,
+[data-theme="dark"] [class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg,
+[data-theme="dark"] [class*="composer"] button:not([aria-label*="attach" i]):not([aria-label*="upload" i]) svg * {
+    fill: #163F2D !important;
+    color: #163F2D !important;
+    stroke: #163F2D !important;
 }
 
 /* ============================================
