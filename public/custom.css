@@ -18,9 +18,8 @@
    HEADER LOGO - Replace Chainlit logo
    ============================================ */
 
-/* Hide default Chainlit text/logo */
-header a[href="/"] > span,
-header .MuiTypography-root {
+/* Hide default Chainlit text in header */
+header a[href="/"] > span {
     font-size: 0 !important;
     color: transparent !important;
 }
@@ -46,20 +45,8 @@ header a[href="/"] {
    BOT AVATAR - Social icon with A
    ============================================ */
 
-/* Replace bot avatar with Automato social icon */
-.message-avatar,
-.step-avatar,
-[class*="avatar"] img {
-    content: url('/public/avatar.png') !important;
-    border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
-    object-fit: cover !important;
-}
-
-/* Avatar container */
-.message-avatar,
-.step-avatar {
+/* Avatar container - only target message avatars, not input buttons */
+.message-avatar {
     width: 40px !important;
     height: 40px !important;
     min-width: 40px !important;
@@ -70,9 +57,8 @@ header a[href="/"] {
     background-position: center !important;
 }
 
-/* Hide default avatar image, use background */
-.message-avatar img,
-.step-avatar img {
+/* Hide default avatar image inside message avatar */
+.message-avatar img {
     opacity: 0 !important;
 }
 
@@ -80,21 +66,18 @@ header a[href="/"] {
    BUTTONS & ACCENTS
    ============================================ */
 
-/* Send button - Deep Green */
-button[type="submit"],
-.cl-send-button {
+/* Send button - Deep Green - be specific to not affect attachment button */
+button[type="submit"] {
     background-color: var(--automato-deep-green) !important;
     border-color: var(--automato-deep-green) !important;
 }
 
-button[type="submit"]:hover,
-.cl-send-button:hover {
+button[type="submit"]:hover {
     background-color: #0a4a3c !important;
 }
 
 /* Dark theme - Pacific Mint */
-[data-theme="dark"] button[type="submit"],
-[data-theme="dark"] .cl-send-button {
+[data-theme="dark"] button[type="submit"] {
     background-color: var(--automato-pacific-mint) !important;
     border-color: var(--automato-pacific-mint) !important;
     color: #1A1A2E !important;
@@ -104,12 +87,10 @@ button[type="submit"]:hover,
    HIDE CHAINLIT BRANDING
    ============================================ */
 
-/* Hide "Built with Chainlit" watermark */
-.watermark,
-[class*="watermark"],
-footer a[href*="chainlit"] {
+/* Hide "Built with Chainlit" watermark - be specific */
+a[href*="chainlit.io"],
+span:has(> a[href*="chainlit"]) {
     display: none !important;
-    opacity: 0 !important;
     visibility: hidden !important;
 }
 
@@ -117,12 +98,12 @@ footer a[href*="chainlit"] {
    GENERAL STYLING
    ============================================ */
 
-/* Primary color for links and accents */
-a {
+/* Primary color for links */
+a:not([href*="chainlit"]) {
     color: var(--automato-deep-green);
 }
 
-[data-theme="dark"] a {
+[data-theme="dark"] a:not([href*="chainlit"]) {
     color: var(--automato-pacific-mint);
 }
 
@@ -142,4 +123,24 @@ input:focus {
 [data-theme="dark"] input:focus {
     border-color: var(--automato-pacific-mint) !important;
     outline-color: var(--automato-pacific-mint) !important;
+}
+
+/* ============================================
+   ENSURE ATTACHMENT BUTTON IS VISIBLE
+   ============================================ */
+
+/* Make sure attachment/upload button is always visible */
+button[id*="attach"],
+button[aria-label*="attach"],
+button[aria-label*="Attach"],
+button[aria-label*="upload"],
+button[aria-label*="Upload"],
+button[aria-label*="file"],
+label[for*="upload"],
+.upload-button,
+[class*="attach"],
+[class*="upload"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }

@@ -1,50 +1,29 @@
 [project]
 name = "Garden Design AI"
 enable_telemetry = false
-user_env = []
-session_timeout = 3600
-cache = false
 
 [features]
-prompt_playground = false
 multi_modal = true
+prompt_playground = false
 
 [features.speech_to_text]
 enabled = false
 
 [UI]
 name = "Garden Design AI"
-show_readme_as_default = false
 description = "Trasforma il tuo giardino con l'intelligenza artificiale"
 default_theme = "light"
-hide_cot = true
 custom_css = "/public/custom.css"
-default_expand_messages = true
-
-# Logo header - Automato
-custom_logo = "/public/logo_light.png"
-
-# Avatar del bot - icona social con A
-custom_bot_avatar = "/public/avatar.png"
-
-# Favicon
-favicon = "/public/favicon.png"
 
 [UI.theme]
-layout = "default"
 font_family = "Inter, sans-serif"
 
 [UI.theme.light]
 background = "#FAFAFA"
 paper = "#FFFFFF"
 primary = "#0D5D4B"
-secondary = "#10B981"
 
 [UI.theme.dark]
 background = "#1A1A2E"
 paper = "#16213E"
 primary = "#5EFFC0"
-secondary = "#10B981"
-
-[meta]
-generated_by = "Automato AI"
