@@ -1,27 +1,35 @@
 /*
  * Automato AI Branding - Garden Design Bot
+ * Colors from Brand Identity Guidelines
  */
 
 /* ============================================
-   BRAND COLORS
+   BRAND COLORS (from guidelines)
    ============================================ */
 
 :root {
-    --automato-deep-green: #0D5D4B;
-    --automato-pacific-mint: #5EFFC0;
+    /* Main Colors */
+    --automato-graphite: #1B1B1B;
+    --automato-deep-green: #163F2D;
+
+    /* Secondary Colors */
+    --automato-gray-white: #F5F5F5;
+    --automato-pacific-mint: #ACFFC9;
+    --automato-black: #101010;
+
+    /* Accent Color */
+    --automato-electric-mint: #75FF94;
 }
 
 /* ============================================
    LOGO POSITIONING - Higher above chat
    ============================================ */
 
-/* Move logo higher */
 header {
     padding-top: 20px !important;
     margin-bottom: 40px !important;
 }
 
-/* Logo area */
 header a[href="/"] {
     margin-bottom: 30px !important;
 }
@@ -30,7 +38,6 @@ header a[href="/"] {
    REMOVE UNWANTED BOXES/BORDERS
    ============================================ */
 
-/* Remove box around input area */
 .composer,
 [class*="composer"],
 [class*="input-container"],
@@ -40,7 +47,6 @@ header a[href="/"] {
     background: transparent !important;
 }
 
-/* Keep only the textarea border */
 textarea {
     border: 1px solid #e0e0e0 !important;
     border-radius: 8px !important;
@@ -50,7 +56,6 @@ textarea {
     border-color: #444 !important;
 }
 
-/* Remove any outer boxes */
 .MuiPaper-root,
 [class*="Paper"] {
     box-shadow: none !important;
@@ -74,16 +79,35 @@ textarea {
 }
 
 /* ============================================
-   BUTTONS
+   SEND BUTTON - Automato Colors
    ============================================ */
 
+/* LIGHT THEME: Deep Green background, Electric Mint arrow */
 button[type="submit"] {
     background-color: var(--automato-deep-green) !important;
+    border-color: var(--automato-deep-green) !important;
 }
 
+button[type="submit"] svg,
+button[type="submit"] path {
+    fill: var(--automato-electric-mint) !important;
+    color: var(--automato-electric-mint) !important;
+}
+
+button[type="submit"]:hover {
+    opacity: 0.9 !important;
+}
+
+/* DARK THEME: Electric Mint background, Deep Green arrow */
 [data-theme="dark"] button[type="submit"] {
-    background-color: var(--automato-pacific-mint) !important;
-    color: #1A1A2E !important;
+    background-color: var(--automato-electric-mint) !important;
+    border-color: var(--automato-electric-mint) !important;
+}
+
+[data-theme="dark"] button[type="submit"] svg,
+[data-theme="dark"] button[type="submit"] path {
+    fill: var(--automato-deep-green) !important;
+    color: var(--automato-deep-green) !important;
 }
 
 /* ============================================
