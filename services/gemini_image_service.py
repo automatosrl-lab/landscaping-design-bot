@@ -85,30 +85,34 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
 
     IMAGE_EDITING_PROMPT_TEMPLATE = """Modifica questa immagine di un giardino/spazio esterno.
 
-## REGOLE CRITICHE - LEGGI ATTENTAMENTE:
+## REGOLE ASSOLUTE - RISPETTA RIGOROSAMENTE:
 
-1. **PRESERVA ASSOLUTAMENTE** questi elementi senza alcuna modifica:
-   - La casa/edificio principale (forma, finestre, porte, tetto)
-   - Le fondamenta e strutture architettoniche
-   - {preserve_elements}
+### 1. PRESERVA SENZA MODIFICHE:
+- La casa/edificio principale (forma, finestre, porte, tetto)
+- Le fondamenta e strutture architettoniche
+- {preserve_elements}
 
-2. **AGGIUNGI SOLO QUESTI ELEMENTI** (nient'altro!):
-   {modifications}
+### 2. AGGIUNGI ESCLUSIVAMENTE QUESTI ELEMENTI (NIENT'ALTRO):
+{modifications}
 
-3. **STILE RICHIESTO**: {style}
+### 3. NON AGGIUNGERE MAI:
+- Fontane (a meno che non sia nella lista sopra)
+- Gazebo o pergole (a meno che non sia nella lista sopra)
+- Area barbecue (a meno che non sia nella lista sopra)
+- Mobili da esterno extra non richiesti
+- Elementi decorativi non specificati
 
-4. **QUALITÀ**:
-   - Rendering fotorealistico professionale
-   - Illuminazione naturale ({lighting})
-   - Alta qualità, dettagli realistici
+### 4. STILE: {style}
 
-## DESCRIZIONE DETTAGLIATA DEL NUOVO GIARDINO:
+### 5. QUALITÀ: Rendering fotorealistico professionale, illuminazione naturale ({lighting})
+
 {detailed_description}
 
-## REGOLE FINALI OBBLIGATORIE:
-- La casa e le strutture esistenti devono rimanere IDENTICHE
-- Aggiungi SOLO gli elementi elencati sopra, nient'altro
-- Il risultato deve sembrare una foto professionale di architettura del paesaggio"""
+## ISTRUZIONI FINALI:
+1. La casa DEVE rimanere IDENTICA
+2. Aggiungi SOLO e SOLTANTO gli elementi elencati al punto 2
+3. NON inventare elementi extra - segui la lista LETTERALMENTE
+4. Il risultato deve sembrare una foto professionale"""
 
     # =========================================================================
     # CHAT METHODS
@@ -212,19 +216,20 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
         style_desc = style_descriptions.get(style, style_descriptions["modern"])
 
         # Costruisci descrizione dettagliata
-        modifications_text = "\n   - ".join(modifications) if modifications else "Miglioramento generale del landscape"
-        preserve_text = "\n   - ".join(preserve_list)
+        modifications_text = "\n- ".join(modifications) if modifications else "Miglioramento generale del landscape"
+        preserve_text = "\n- ".join(preserve_list)
 
         detailed_desc = f"""
 Trasforma questo giardino in uno spazio esterno {style_desc}.
 
-Elementi da aggiungere/modificare:
+LISTA COMPLETA DEGLI ELEMENTI DA AGGIUNGERE:
 - {modifications_text}
+
+IMPORTANTE: Aggiungi SOLO gli elementi elencati qui sopra. Non aggiungere nient'altro.
 
 {additional_notes}
 
-Il rendering deve essere fotorealistico, come una foto professionale di architettura del paesaggio
-scattata con una Canon EOS 5D, luce naturale {lighting}.
+Il rendering deve essere fotorealistico, come una foto professionale scattata con Canon EOS 5D.
 """
 
         # Costruisci prompt finale
@@ -341,27 +346,43 @@ Rispondi in italiano in modo chiaro e strutturato."""
         Returns:
             dict con: elements (lista), excluded (lista), summary (stringa breve)
         """
-        prompt = f"""Sei un assistente che interpreta le richieste di garden design.
+        prompt = f"""Sei un interprete ESPERTO di richieste per garden design. Devi capire ESATTAMENTE cosa l'utente vuole e cosa NON vuole.
 
-L'utente ha scelto lo stile: {style}
+STILE SCELTO: {style}
 
-L'utente ha scritto:
+RICHIESTA UTENTE:
 "{user_message}"
 
-Analizza la richiesta e restituisci ESATTAMENTE in questo formato JSON (senza markdown, solo JSON puro):
+REGOLE DI INTERPRETAZIONE (LEGGI CON ATTENZIONE):
+
+1. ELEMENTI DA AGGIUNGERE (metti in "elements"):
+   - Quando dice "voglio X", "sì X", "magari X", "un po' di X"
+   - Esempio: "Voglio un prato inglese" → elements: ["prato all'inglese"]
+   - Esempio: "vialetto in pietra sì" → elements: ["vialetti in pietra naturale"]
+   - Esempio: "sedute qualcuna sulla parte sinistra" → elements: ["alcune sedute/divanetti sul lato sinistro"]
+
+2. ELEMENTI DA ESCLUDERE (metti in "excluded"):
+   - Quando dice "niente X", "no X", "non serve X", "X no", "senza X", "non voglio X"
+   - Esempio: "Fontana no" → excluded: ["fontana"]
+   - Esempio: "niente pergola, niente gazebo" → excluded: ["pergola", "gazebo"]
+   - Esempio: "illuminazione non serve" → excluded: ["illuminazione"]
+   - Esempio: "Area barbecue no" → excluded: ["area barbecue"]
+
+3. ELEMENTI GIÀ ESISTENTI (NON mettere in nessuna lista):
+   - Quando dice "c'è già", "già c'è", "esiste già", "perché c'è"
+   - Esempio: "non voglio piscina perché c'è già" → NON aggiungere piscina in nessuna lista
+
+4. CATTURA I DETTAGLI SPECIFICI:
+   - "piante carine basse, non alberi" → "piante basse decorative (no alberi)"
+   - "illuminazione molto lieve" → "illuminazione discreta e soffusa"
+   - "piscina rettangolare non troppo grande" → "piscina rettangolare di dimensioni medie"
+
+ANALIZZA LA RICHIESTA PAROLA PER PAROLA E RISPONDI SOLO CON QUESTO JSON (senza markdown, senza spiegazioni):
 {{
     "elements": ["elemento1 con dettagli", "elemento2 con dettagli"],
-    "excluded": ["elemento da non mettere", "altro elemento da escludere"],
-    "summary": "Riassunto breve di 1 riga"
-}}
-
-REGOLE:
-- In "elements" metti SOLO ciò che l'utente vuole aggiungere, con i dettagli specifici (es. "piscina rettangolare di medie dimensioni", "prato all'inglese", "vialetti in pietra yaya")
-- In "excluded" metti ciò che l'utente NON vuole (quando dice "niente", "no", "senza", ecc.)
-- Se l'utente dice "illuminazione lieve/discreta", scrivi "illuminazione discreta e soffusa"
-- In "summary" fai un riassunto breve per conferma
-
-Rispondi SOLO con il JSON, nient'altro."""
+    "excluded": ["cosa non mettere 1", "cosa non mettere 2"],
+    "summary": "Riassunto breve"
+}}"""
 
         response = self.client.models.generate_content(
             model=self.chat_model,
