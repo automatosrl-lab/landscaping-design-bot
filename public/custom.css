@@ -7,18 +7,118 @@
    BRAND COLORS (from guidelines)
    ============================================ */
 
+/* Automato colors in HEX for reference:
+   Deep Green: #163F2D
+   Electric Mint: #75FF94
+   Pacific Mint: #ACFFC9
+   Graphite: #1B1B1B
+*/
+
+/* ============================================
+   CHAINLIT THEME OVERRIDE (HSL format required!)
+   Chainlit uses Tailwind/shadcn with HSL values
+   ============================================ */
+
 :root {
-    /* Main Colors */
-    --automato-graphite: #1B1B1B;
-    --automato-deep-green: #163F2D;
+    /* Override Chainlit's primary color - LIGHT THEME */
+    /* Deep Green #163F2D = 154 48% 17% */
+    --primary: 154 48% 17% !important;
+    /* Electric Mint #75FF94 = 133 100% 73% */
+    --primary-foreground: 133 100% 73% !important;
 
-    /* Secondary Colors */
-    --automato-gray-white: #F5F5F5;
-    --automato-pacific-mint: #ACFFC9;
-    --automato-black: #101010;
+    /* Also set accent colors */
+    --accent: 154 48% 17% !important;
+    --accent-foreground: 133 100% 73% !important;
+}
 
-    /* Accent Color */
-    --automato-electric-mint: #75FF94;
+/* DARK THEME: Swap colors */
+.dark,
+[data-theme="dark"],
+[class*="dark"] {
+    /* Electric Mint as background */
+    --primary: 133 100% 73% !important;
+    /* Deep Green as foreground */
+    --primary-foreground: 154 48% 17% !important;
+
+    --accent: 133 100% 73% !important;
+    --accent-foreground: 154 48% 17% !important;
+}
+
+/* ============================================
+   DIRECT OVERRIDE for bg-primary buttons
+   Target the specific Tailwind class pattern
+   ============================================ */
+
+/* Light theme - target buttons with bg-primary class */
+.bg-primary,
+button.bg-primary,
+[class*="bg-primary"] {
+    background-color: #163F2D !important;
+    background: #163F2D !important;
+}
+
+.text-primary-foreground,
+button .text-primary-foreground,
+[class*="text-primary-foreground"] {
+    color: #75FF94 !important;
+}
+
+/* The send button specifically - round button with bg-primary */
+button.rounded-full.bg-primary,
+button[type="submit"].rounded-full,
+button[type="submit"].bg-primary {
+    background-color: #163F2D !important;
+    background: #163F2D !important;
+    color: #75FF94 !important;
+}
+
+button.rounded-full.bg-primary svg,
+button.rounded-full.bg-primary svg *,
+button.rounded-full.bg-primary path,
+button[type="submit"].rounded-full svg,
+button[type="submit"].rounded-full svg *,
+button[type="submit"].bg-primary svg,
+button[type="submit"].bg-primary svg * {
+    fill: #75FF94 !important;
+    color: #75FF94 !important;
+    stroke: #75FF94 !important;
+}
+
+/* Dark theme overrides */
+.dark .bg-primary,
+.dark button.bg-primary,
+.dark [class*="bg-primary"],
+[data-theme="dark"] .bg-primary,
+[data-theme="dark"] button.bg-primary {
+    background-color: #75FF94 !important;
+    background: #75FF94 !important;
+}
+
+.dark .text-primary-foreground,
+.dark [class*="text-primary-foreground"],
+[data-theme="dark"] .text-primary-foreground {
+    color: #163F2D !important;
+}
+
+.dark button.rounded-full.bg-primary,
+.dark button[type="submit"].rounded-full,
+.dark button[type="submit"].bg-primary,
+[data-theme="dark"] button.rounded-full.bg-primary,
+[data-theme="dark"] button[type="submit"].rounded-full {
+    background-color: #75FF94 !important;
+    background: #75FF94 !important;
+    color: #163F2D !important;
+}
+
+.dark button.rounded-full.bg-primary svg,
+.dark button.rounded-full.bg-primary svg *,
+.dark button[type="submit"].rounded-full svg,
+.dark button[type="submit"].rounded-full svg *,
+[data-theme="dark"] button.rounded-full.bg-primary svg,
+[data-theme="dark"] button.rounded-full.bg-primary svg * {
+    fill: #163F2D !important;
+    color: #163F2D !important;
+    stroke: #163F2D !important;
 }
 
 /* ============================================
@@ -52,7 +152,8 @@ textarea {
     border-radius: 8px !important;
 }
 
-[data-theme="dark"] textarea {
+[data-theme="dark"] textarea,
+.dark textarea {
     border-color: #444 !important;
 }
 
@@ -76,158 +177,6 @@ textarea {
 
 .message-avatar img {
     opacity: 0 !important;
-}
-
-/* ============================================
-   SEND BUTTON - Automato Colors (AGGRESSIVE)
-   ============================================ */
-
-/* Target ALL circular/icon buttons that could be send */
-/* LIGHT THEME: Deep Green background (#163F2D), Electric Mint arrow (#75FF94) */
-
-/* Primary accent color override - catches theme colors */
-:root {
-    --primary: #163F2D !important;
-    --primary-foreground: #75FF94 !important;
-    --accent: #163F2D !important;
-    --accent-foreground: #75FF94 !important;
-}
-
-/* Generic button overrides for send-like buttons */
-button[type="submit"],
-input[type="submit"],
-button[id*="send" i],
-button[id*="submit" i],
-button[aria-label*="send" i],
-button[aria-label*="invia" i],
-button[aria-label*="submit" i],
-button[title*="send" i],
-button[title*="invia" i],
-[class*="send" i],
-[class*="submit" i]:not(form),
-[role="button"][class*="send" i],
-.MuiIconButton-colorPrimary,
-.MuiButton-containedPrimary,
-/* Chainlit specific - target buttons near textarea */
-.step-input button,
-[class*="Input"] button,
-[class*="input"] button:not([class*="attach"]):not([class*="upload"]):not([class*="file"]),
-/* Target by position - rightmost button in input area */
-[class*="actions"] button:last-child,
-[class*="toolbar"] button:last-child {
-    background-color: #163F2D !important;
-    background: #163F2D !important;
-    border-color: #163F2D !important;
-    color: #75FF94 !important;
-}
-
-/* SVG icons inside send buttons */
-button[type="submit"] svg,
-button[type="submit"] svg *,
-button[type="submit"] path,
-button[type="submit"] circle,
-button[type="submit"] line,
-button[type="submit"] polyline,
-button[type="submit"] polygon,
-input[type="submit"] ~ svg,
-button[id*="send" i] svg,
-button[id*="send" i] svg *,
-button[aria-label*="send" i] svg,
-button[aria-label*="send" i] svg *,
-button[aria-label*="invia" i] svg,
-button[aria-label*="invia" i] svg *,
-[class*="send" i] svg,
-[class*="send" i] svg *,
-[class*="submit" i] svg,
-[class*="submit" i] svg *,
-.step-input button svg,
-.step-input button svg *,
-[class*="Input"] button svg,
-[class*="Input"] button svg *,
-[class*="input"] button:not([class*="attach"]):not([class*="upload"]) svg,
-[class*="input"] button:not([class*="attach"]):not([class*="upload"]) svg *,
-[class*="actions"] button:last-child svg,
-[class*="actions"] button:last-child svg *,
-.MuiIconButton-colorPrimary svg,
-.MuiIconButton-colorPrimary svg * {
-    fill: #75FF94 !important;
-    color: #75FF94 !important;
-    stroke: #75FF94 !important;
-}
-
-/* Hover states */
-button[type="submit"]:hover,
-button[id*="send" i]:hover,
-button[aria-label*="send" i]:hover,
-[class*="send" i]:hover {
-    opacity: 0.85 !important;
-    background-color: #1a4a35 !important;
-}
-
-/* ============================================
-   DARK THEME: Electric Mint bg, Deep Green arrow
-   ============================================ */
-
-[data-theme="dark"],
-.dark,
-[class*="dark"] {
-    --primary: #75FF94 !important;
-    --primary-foreground: #163F2D !important;
-    --accent: #75FF94 !important;
-    --accent-foreground: #163F2D !important;
-}
-
-[data-theme="dark"] button[type="submit"],
-[data-theme="dark"] input[type="submit"],
-[data-theme="dark"] button[id*="send" i],
-[data-theme="dark"] button[id*="submit" i],
-[data-theme="dark"] button[aria-label*="send" i],
-[data-theme="dark"] button[aria-label*="invia" i],
-[data-theme="dark"] button[title*="send" i],
-[data-theme="dark"] [class*="send" i],
-[data-theme="dark"] [class*="submit" i]:not(form),
-[data-theme="dark"] .MuiIconButton-colorPrimary,
-[data-theme="dark"] .MuiButton-containedPrimary,
-[data-theme="dark"] .step-input button,
-[data-theme="dark"] [class*="Input"] button,
-[data-theme="dark"] [class*="input"] button:not([class*="attach"]):not([class*="upload"]):not([class*="file"]),
-[data-theme="dark"] [class*="actions"] button:last-child,
-.dark button[type="submit"],
-.dark [class*="send" i],
-[class*="dark"] button[type="submit"],
-[class*="dark"] [class*="send" i] {
-    background-color: #75FF94 !important;
-    background: #75FF94 !important;
-    border-color: #75FF94 !important;
-    color: #163F2D !important;
-}
-
-[data-theme="dark"] button[type="submit"] svg,
-[data-theme="dark"] button[type="submit"] svg *,
-[data-theme="dark"] button[type="submit"] path,
-[data-theme="dark"] button[id*="send" i] svg,
-[data-theme="dark"] button[id*="send" i] svg *,
-[data-theme="dark"] button[aria-label*="send" i] svg,
-[data-theme="dark"] button[aria-label*="send" i] svg *,
-[data-theme="dark"] [class*="send" i] svg,
-[data-theme="dark"] [class*="send" i] svg *,
-[data-theme="dark"] [class*="submit" i] svg,
-[data-theme="dark"] [class*="submit" i] svg *,
-[data-theme="dark"] .step-input button svg,
-[data-theme="dark"] .step-input button svg *,
-[data-theme="dark"] [class*="Input"] button svg,
-[data-theme="dark"] [class*="Input"] button svg *,
-[data-theme="dark"] [class*="actions"] button:last-child svg,
-[data-theme="dark"] [class*="actions"] button:last-child svg *,
-[data-theme="dark"] .MuiIconButton-colorPrimary svg,
-[data-theme="dark"] .MuiIconButton-colorPrimary svg *,
-.dark button[type="submit"] svg,
-.dark button[type="submit"] svg *,
-.dark [class*="send" i] svg,
-.dark [class*="send" i] svg * {
-    fill: #163F2D !important;
-    color: #163F2D !important;
-    stroke: #163F2D !important;
 }
 
 /* ============================================
