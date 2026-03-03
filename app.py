@@ -2,9 +2,9 @@
 Landscaping Design Bot - Applicazione Chainlit
 
 Chatbot AI per garden design con rendering automatico.
-Usa SOLO Gemini per:
+Usa Gemini via OpenRouter per:
 - Chat (Gemini 3 Flash)
-- Image Generation/Editing (Gemini 3.1 Flash Image / Nano Banana 2)
+- Image Generation/Editing (Nano Banana Pro)
 
 Il sistema modifica SOLO il landscape preservando casa e strutture.
 """
@@ -33,9 +33,9 @@ def get_service() -> GeminiImageService:
     """Ottiene o crea il servizio Gemini."""
     global gemini_service
     if gemini_service is None:
-        api_key = os.getenv("GOOGLE_API_KEY")
+        api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
-            raise ValueError("GOOGLE_API_KEY non configurata")
+            raise ValueError("OPENROUTER_API_KEY non configurata")
         gemini_service = GeminiImageService(api_key)
     return gemini_service
 
@@ -453,9 +453,9 @@ async def set_starters():
 # =============================================================================
 
 if __name__ == "__main__":
-    if not os.getenv("GOOGLE_API_KEY"):
-        print("⚠️  GOOGLE_API_KEY non configurata!")
-        print("   Crea un file .env con: GOOGLE_API_KEY=your_key")
+    if not os.getenv("OPENROUTER_API_KEY"):
+        print("⚠️  OPENROUTER_API_KEY non configurata!")
+        print("   Crea un file .env con: OPENROUTER_API_KEY=your_key")
 
     print("\n🌿 Garden Design Bot pronto!")
     print("   Avvia con: chainlit run app.py")

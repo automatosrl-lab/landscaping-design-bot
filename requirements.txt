@@ -3,10 +3,7 @@
 # Chat Interface
 chainlit>=1.0.0
 
-# Google Gemini AI (nuova libreria per Gemini 2.5/3)
-google-genai>=1.0.0
-
-# HTTP Client
+# HTTP Client (per chiamate OpenRouter API)
 httpx>=0.27.0
 
 # Image Processing

@@ -1,35 +1,33 @@
 """
-Servizio Gemini per Image Generation/Editing
+Servizio per Chat + Image Generation/Editing via OpenRouter
 
 Modelli (Marzo 2026):
-- gemini-3-flash-preview: Chat veloce Pro-level (Gemini 3 Flash)
-- gemini-3.1-flash-image-preview: Image generation (Nano Banana 2)
+- google/gemini-3-flash-preview: Chat veloce (Gemini 3 Flash)
+- google/gemini-3-pro-image-preview: Image generation (Nano Banana Pro)
 
-Funzionalità:
-- Analizzare foto di giardini
-- Generare rendering modificando SOLO il landscape
-- Preservare casa, muri, strutture esistenti
-
-Fonte: https://ai.google.dev/gemini-api/docs/image-generation
+OpenRouter API (compatibile OpenAI)
+Fonte: https://openrouter.ai/docs/guides/overview/multimodal/image-generation
 """
 
-from google import genai
-from google.genai import types
 import base64
 import httpx
+import json
 import logging
+import re
 from typing import Optional, List
 
 logger = logging.getLogger(__name__)
 
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
 
 class GeminiImageService:
     """
-    Servizio unificato per chat + image editing con Gemini.
+    Servizio unificato per chat + image editing via OpenRouter.
 
     Modelli utilizzati (Marzo 2026):
-    - gemini-3-flash-preview: Chat veloce Pro-level (Gemini 3 Flash)
-    - gemini-3.1-flash-image-preview: Generazione/editing immagini (Nano Banana 2)
+    - google/gemini-3-flash-preview: Chat veloce (Gemini 3 Flash)
+    - google/gemini-3-pro-image-preview: Generazione/editing immagini (Nano Banana Pro)
     """
 
     def __init__(self, api_key: str):
@@ -37,17 +35,21 @@ class GeminiImageService:
         Inizializza il servizio.
 
         Args:
-            api_key: Google AI Studio API key
+            api_key: OpenRouter API key
         """
-        self.client = genai.Client(api_key=api_key)
+        self.api_key = api_key
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://gardendesignai.app",
+            "X-Title": "Garden Design AI",
+        }
 
-        # Modelli - Aggiornati a Marzo 2026
-        # gemini-3-flash-preview: Chat veloce con intelligenza Pro-level
-        # gemini-3.1-flash-image-preview: Nano Banana 2 per image generation (ultimo modello)
-        self.chat_model = "gemini-3-flash-preview"  # Gemini 3 Flash per chat
-        self.image_model = "gemini-3.1-flash-image-preview"  # Nano Banana 2 per image generation
+        # Modelli - Marzo 2026 via OpenRouter
+        self.chat_model = "google/gemini-3-flash-preview"
+        self.image_model = "google/gemini-3-pro-image-preview"  # Nano Banana Pro
 
-        # Chat session per conversazione multi-turn
+        # Chat history (formato OpenAI messages)
         self.chat_history = []
 
         # Immagine corrente in sessione (per editing iterativo)
@@ -121,6 +123,145 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
 4. Se la lista dice solo "prato e piante", metti SOLO prato e piante, NIENT'ALTRO"""
 
     # =========================================================================
+    # API HELPERS
+    # =========================================================================
+
+    async def _call_openrouter(
+        self,
+        model: str,
+        messages: list,
+        modalities: list = None,
+        temperature: float = 0.7,
+        max_tokens: int = 1024,
+    ) -> dict:
+        """Chiama l'API OpenRouter e restituisce la risposta JSON."""
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if modalities:
+            payload["modalities"] = modalities
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                OPENROUTER_API_URL,
+                headers=self.headers,
+                json=payload,
+            )
+
+            if response.status_code != 200:
+                error_body = response.text[:500]
+                logger.error(f"OpenRouter errore {response.status_code}: {error_body}")
+                raise ValueError(
+                    f"Errore API ({response.status_code}): {error_body}"
+                )
+
+            return response.json()
+
+    @staticmethod
+    def _image_to_data_url(image_data: bytes, mime_type: str = "image/jpeg") -> str:
+        """Converte immagine bytes in data URL base64."""
+        b64 = base64.b64encode(image_data).decode()
+        return f"data:{mime_type};base64,{b64}"
+
+    def _extract_text_from_response(self, data: dict) -> str:
+        """Estrai testo dalla risposta OpenRouter."""
+        choices = data.get("choices", [])
+        if not choices:
+            raise ValueError("Nessuna risposta dal modello")
+
+        message = choices[0].get("message", {})
+        content = message.get("content", "")
+
+        if isinstance(content, str):
+            return content
+
+        # Se content è un array, concatena le parti testuali
+        if isinstance(content, list):
+            text_parts = []
+            for part in content:
+                if isinstance(part, dict) and part.get("type") == "text":
+                    text_parts.append(part.get("text", ""))
+                elif isinstance(part, str):
+                    text_parts.append(part)
+            return "\n".join(text_parts)
+
+        return str(content)
+
+    def _extract_image_from_response(self, data: dict) -> bytes:
+        """Estrai immagine dalla risposta OpenRouter con error handling robusto."""
+        choices = data.get("choices", [])
+        if not choices:
+            error = data.get("error", {})
+            if error:
+                raise ValueError(f"Errore dal modello: {error.get('message', error)}")
+            raise ValueError("Nessuna risposta dal modello")
+
+        message = choices[0].get("message", {})
+
+        # 1. Cerca in message.images[] (formato OpenRouter)
+        images = message.get("images", [])
+        if images:
+            for img in images:
+                url = ""
+                if isinstance(img, dict):
+                    url = img.get("image_url", {}).get("url", "")
+                if url.startswith("data:image"):
+                    b64_data = url.split(",", 1)[1]
+                    return base64.b64decode(b64_data)
+
+        # 2. Cerca in content array (formato OpenAI vision)
+        content = message.get("content", "")
+        if isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict):
+                    if part.get("type") == "image_url":
+                        url = part.get("image_url", {}).get("url", "")
+                        if url.startswith("data:image"):
+                            b64_data = url.split(",", 1)[1]
+                            return base64.b64decode(b64_data)
+
+        # 3. Cerca data URL nel testo della risposta
+        if isinstance(content, str) and "data:image" in content:
+            match = re.search(
+                r"data:image/[^;]+;base64,([A-Za-z0-9+/=]+)", content
+            )
+            if match:
+                return base64.b64decode(match.group(1))
+
+        # Nessuna immagine trovata — restituisci errore descrittivo
+        finish_reason = choices[0].get("finish_reason", "unknown")
+        text_content = content if isinstance(content, str) else str(content)
+        if len(text_content) > 200:
+            text_content = text_content[:200] + "..."
+
+        logger.error(
+            f"Nessuna immagine nella risposta. finish_reason={finish_reason}, "
+            f"content={text_content}"
+        )
+        raise ValueError(
+            f"Il modello non ha generato un'immagine. "
+            f"Risposta: {text_content}"
+        )
+
+    def _build_image_message(self, image_data: bytes, text: str) -> dict:
+        """Costruisce un messaggio utente con immagine + testo."""
+        return {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": self._image_to_data_url(image_data),
+                    },
+                },
+                {"type": "text", "text": text},
+            ],
+        }
+
+    # =========================================================================
     # CHAT METHODS
     # =========================================================================
 
@@ -135,107 +276,35 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
         Returns:
             Risposta del bot
         """
-        contents = []
+        # Costruisci messages
+        messages = [{"role": "system", "content": self.CHAT_SYSTEM_PROMPT}]
+        messages.extend(self.chat_history)
 
-        # Aggiungi system prompt se è il primo messaggio
-        if not self.chat_history:
-            contents.append(types.Content(
-                role="user",
-                parts=[types.Part.from_text(text=f"[SYSTEM]: {self.CHAT_SYSTEM_PROMPT}")]
-            ))
-            contents.append(types.Content(
-                role="model",
-                parts=[types.Part.from_text(text="Capito, sono pronto ad aiutare come consulente di garden design.")]
-            ))
-
-        # Aggiungi history
-        contents.extend(self.chat_history)
-
-        # Prepara messaggio corrente
-        parts = []
+        # Messaggio corrente
         if image_data:
-            # Salva immagine originale
             self.original_image = image_data
             self.current_image = image_data
+            user_msg = self._build_image_message(image_data, message)
+        else:
+            user_msg = {"role": "user", "content": message}
 
-            parts.append(types.Part.from_bytes(
-                data=image_data,
-                mime_type="image/jpeg"
-            ))
+        messages.append(user_msg)
 
-        parts.append(types.Part.from_text(text=message))
-
-        contents.append(types.Content(role="user", parts=parts))
-
-        # Genera risposta
-        response = self.client.models.generate_content(
+        # Chiama API
+        data = await self._call_openrouter(
             model=self.chat_model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                temperature=0.7,
-                max_output_tokens=1024,
-            )
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1024,
         )
 
-        response_text = response.text
+        response_text = self._extract_text_from_response(data)
 
-        # Aggiorna history
-        self.chat_history.append(types.Content(role="user", parts=parts))
-        self.chat_history.append(types.Content(
-            role="model",
-            parts=[types.Part.from_text(text=response_text)]
-        ))
+        # Aggiorna history (salva solo testo per non esplodere la memoria)
+        self.chat_history.append({"role": "user", "content": message})
+        self.chat_history.append({"role": "assistant", "content": response_text})
 
         return response_text
-
-    # =========================================================================
-    # RESPONSE HELPERS
-    # =========================================================================
-
-    def _extract_image_from_response(self, response) -> bytes:
-        """Estrai immagine dalla risposta Gemini con error handling robusto."""
-        if not response.candidates:
-            # Controlla se c'è un motivo di blocco
-            block_reason = getattr(response, 'prompt_feedback', None)
-            logger.error(f"Nessun candidato nella risposta. Feedback: {block_reason}")
-            raise ValueError(
-                "Il modello non ha generato una risposta. "
-                "L'immagine potrebbe essere stata bloccata dal filtro di sicurezza."
-            )
-
-        candidate = response.candidates[0]
-
-        # Controlla finish_reason per capire perché non c'è immagine
-        finish_reason = getattr(candidate, 'finish_reason', None)
-        if finish_reason and str(finish_reason) not in ('STOP', 'FinishReason.STOP', '0'):
-            logger.error(f"Generazione terminata con motivo: {finish_reason}")
-            raise ValueError(
-                f"La generazione è stata interrotta: {finish_reason}. "
-                "Prova con una richiesta diversa."
-            )
-
-        if not candidate.content or not candidate.content.parts:
-            logger.error(f"Risposta senza contenuto. Finish reason: {finish_reason}")
-            raise ValueError(
-                "Il modello ha risposto ma senza generare un'immagine. "
-                "Potrebbe essere un problema di quota o il contenuto è stato filtrato."
-            )
-
-        # Cerca immagine nelle parti
-        for part in candidate.content.parts:
-            if part.inline_data and part.inline_data.data:
-                return part.inline_data.data
-
-        # Se arriviamo qui, c'è testo ma nessuna immagine
-        text_parts = [p.text for p in candidate.content.parts if hasattr(p, 'text') and p.text]
-        if text_parts:
-            logger.warning(f"Risposta solo testo: {text_parts[0][:200]}")
-            raise ValueError(
-                f"Il modello ha risposto con testo invece che un'immagine: "
-                f"{text_parts[0][:150]}..."
-            )
-
-        raise ValueError("Nessuna immagine trovata nella risposta del modello.")
 
     # =========================================================================
     # IMAGE EDITING METHODS
@@ -248,13 +317,18 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
         modifications: List[str],
         preserve_elements: List[str] = None,
         lighting: str = "golden hour, pomeriggio",
-        additional_notes: str = ""
+        additional_notes: str = "",
     ) -> bytes:
         """
         Genera un rendering del giardino modificando SOLO il landscape.
         """
         # Prepara lista elementi da preservare
-        preserve_list = ["la casa principale", "le finestre e porte", "il tetto", "le fondamenta"]
+        preserve_list = [
+            "la casa principale",
+            "le finestre e porte",
+            "il tetto",
+            "le fondamenta",
+        ]
         if preserve_elements:
             preserve_list.extend(preserve_elements)
 
@@ -265,13 +339,17 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
             "tropical": "Tropicale lussureggiante con palme, piante esotiche, piscina naturale, legno esotico",
             "zen": "Giapponese zen con ghiaia rastrellata, muschio, lanterne di pietra, bambù, acqua",
             "english": "Giardino all'inglese romantico con rose, bordure fiorite, prato verde, archi",
-            "contemporary": "Contemporaneo con outdoor living, cucina esterna, fire pit, sedute integrate"
+            "contemporary": "Contemporaneo con outdoor living, cucina esterna, fire pit, sedute integrate",
         }
 
         style_desc = style_descriptions.get(style, style_descriptions["modern"])
 
         # Costruisci descrizione dettagliata
-        modifications_text = "\n- ".join(modifications) if modifications else "Miglioramento generale del landscape"
+        modifications_text = (
+            "\n- ".join(modifications)
+            if modifications
+            else "Miglioramento generale del landscape"
+        )
         preserve_text = "\n- ".join(preserve_list)
 
         detailed_desc = f"""
@@ -293,28 +371,24 @@ Il rendering deve essere fotorealistico, come una foto professionale scattata co
             modifications=modifications_text,
             style=style_desc,
             lighting=lighting,
-            detailed_description=detailed_desc
+            detailed_description=detailed_desc,
         )
 
-        # Genera immagine con Gemini
-        contents = [
-            types.Part.from_bytes(data=image_data, mime_type="image/jpeg"),
-            types.Part.from_text(text=prompt)
-        ]
+        # Chiama OpenRouter con modello immagine
+        messages = [self._build_image_message(image_data, prompt)]
 
-        response = self.client.models.generate_content(
+        data = await self._call_openrouter(
             model=self.image_model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE", "TEXT"],
-                temperature=0.4,
-            )
+            messages=messages,
+            modalities=["image", "text"],
+            temperature=0.4,
+            max_tokens=4096,
         )
 
-        # Estrai immagine dalla risposta
-        image_data_result = self._extract_image_from_response(response)
-        self.current_image = image_data_result
-        return image_data_result
+        # Estrai immagine
+        image_result = self._extract_image_from_response(data)
+        self.current_image = image_result
+        return image_result
 
     async def refine_rendering(self, feedback: str) -> bytes:
         """
@@ -333,23 +407,19 @@ IMPORTANTE:
 - Modifica SOLO quello che è stato richiesto nel feedback
 - Il risultato deve essere fotorealistico"""
 
-        contents = [
-            types.Part.from_bytes(data=self.current_image, mime_type="image/jpeg"),
-            types.Part.from_text(text=prompt)
-        ]
+        messages = [self._build_image_message(self.current_image, prompt)]
 
-        response = self.client.models.generate_content(
+        data = await self._call_openrouter(
             model=self.image_model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE", "TEXT"],
-            )
+            messages=messages,
+            modalities=["image", "text"],
+            temperature=0.4,
+            max_tokens=4096,
         )
 
-        # Estrai immagine
-        image_data_result = self._extract_image_from_response(response)
-        self.current_image = image_data_result
-        return image_data_result
+        image_result = self._extract_image_from_response(data)
+        self.current_image = image_result
+        return image_result
 
     async def analyze_garden(self, image_data: bytes) -> dict:
         """
@@ -369,19 +439,18 @@ Restituisci una descrizione strutturata con:
 
 Rispondi in italiano in modo chiaro e strutturato."""
 
-        contents = [
-            types.Part.from_bytes(data=image_data, mime_type="image/jpeg"),
-            types.Part.from_text(text=prompt)
-        ]
+        messages = [self._build_image_message(image_data, prompt)]
 
-        response = self.client.models.generate_content(
+        data = await self._call_openrouter(
             model=self.chat_model,
-            contents=contents,
+            messages=messages,
+            temperature=0.5,
+            max_tokens=1024,
         )
 
         return {
-            "analysis": response.text,
-            "has_image": True
+            "analysis": self._extract_text_from_response(data),
+            "has_image": True,
         }
 
     # =========================================================================
@@ -440,34 +509,32 @@ RISPONDI CON QUESTO JSON (senza markdown):
     "summary": "Riassunto breve"
 }}"""
 
-        response = self.client.models.generate_content(
+        messages = [{"role": "user", "content": prompt}]
+
+        data = await self._call_openrouter(
             model=self.chat_model,
-            contents=[types.Part.from_text(text=prompt)],
-            config=types.GenerateContentConfig(
-                temperature=0.3,
-                max_output_tokens=500,
-            )
+            messages=messages,
+            temperature=0.3,
+            max_tokens=500,
         )
 
+        response_text = self._extract_text_from_response(data)
+
         # Parse JSON dalla risposta
-        import json
         try:
-            # Rimuovi eventuali markdown code blocks
-            text = response.text.strip()
+            text = response_text.strip()
             if text.startswith("```"):
                 text = text.split("```")[1]
                 if text.startswith("json"):
                     text = text[4:]
             text = text.strip()
 
-            result = json.loads(text)
-            return result
+            return json.loads(text)
         except json.JSONDecodeError:
-            # Fallback se il parsing fallisce
             return {
                 "elements": [user_message],
                 "excluded": [],
-                "summary": user_message[:100]
+                "summary": user_message[:100],
             }
 
     # =========================================================================
