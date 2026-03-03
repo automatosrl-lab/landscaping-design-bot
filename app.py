@@ -12,6 +12,7 @@ Il sistema modifica SOLO il landscape preservando casa e strutture.
 import chainlit as cl
 import os
 import logging
+import asyncio
 from dotenv import load_dotenv
 from typing import Optional
 import base64
@@ -29,8 +30,6 @@ from services.gemini_image_service import GeminiImageService
 # =============================================================================
 # CONFIGURAZIONE
 # =============================================================================
-
-gemini_service: Optional[GeminiImageService] = None
 
 MAX_IMAGE_SIZE = 1600  # px lato lungo
 MAX_IMAGE_BYTES = 1_500_000  # ~1.5MB
@@ -69,14 +68,15 @@ def compress_image(image_data: bytes) -> bytes:
 
 
 def get_service() -> GeminiImageService:
-    """Ottiene o crea il servizio Gemini."""
-    global gemini_service
-    if gemini_service is None:
+    """Ottiene o crea il servizio per la sessione corrente (NON globale)."""
+    service = cl.user_session.get("service")
+    if service is None:
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
             raise ValueError("OPENROUTER_API_KEY non configurata")
-        gemini_service = GeminiImageService(api_key)
-    return gemini_service
+        service = GeminiImageService(api_key)
+        cl.user_session.set("service", service)
+    return service
 
 
 # =============================================================================
@@ -103,8 +103,13 @@ async def on_chat_start():
     """Inizializza la sessione di chat."""
 
     try:
-        service = get_service()
-        service.reset_session()
+        # Verifica API key all'avvio
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ValueError("OPENROUTER_API_KEY non configurata")
+        # Crea un servizio NUOVO per questa sessione (ogni sessione ha il suo)
+        service = GeminiImageService(api_key)
+        cl.user_session.set("service", service)
     except ValueError as e:
         await cl.Message(
             content=f"⚠️ Errore di configurazione: {e}\n\nConfigura OPENROUTER_API_KEY nelle variabili ambiente."
@@ -384,30 +389,51 @@ async def generate_rendering():
     if user_description:
         additional += f"\n\nRichiesta originale del cliente: {user_description}"
 
-    # Status message
     logger.info(f"Avvio generazione: style={style}, elements={elements}, image_size={len(image_data)} bytes")
-    status = await cl.Message(content="🎨 **Generazione rendering in corso...**\n\nSto trasformando il tuo giardino mantenendo la casa e le strutture esistenti.\n\n⏱️ Potrebbe richiedere fino a 60 secondi...").send()
+
+    # Messaggio di progresso - aggiornato periodicamente per tenere vivo il WebSocket
+    progress_msg = await cl.Message(content="🎨 **Generazione rendering in corso...**\n\n⏳ Preparazione prompt...").send()
 
     try:
-        # Genera con OpenRouter + Nano Banana Pro
-        rendered_image = await service.generate_landscape_rendering(
-            image_data=image_data,
-            style=style,
-            modifications=elements,
-            preserve_elements=["alberi esistenti da preservare"],
-            lighting="golden hour, tardo pomeriggio",
-            additional_notes=additional
+        # Lancia la generazione come task asincrono
+        generation_task = asyncio.create_task(
+            service.generate_landscape_rendering(
+                image_data=image_data,
+                style=style,
+                modifications=elements,
+                preserve_elements=["alberi esistenti da preservare"],
+                lighting="golden hour, tardo pomeriggio",
+                additional_notes=additional
+            )
         )
+
+        # Keepalive: aggiorna il messaggio ogni 5 secondi per tenere vivo il WebSocket
+        elapsed = 0
+        animations = ["🎨", "🖌️", "🖼️", "✨"]
+        while not generation_task.done():
+            await asyncio.sleep(5)
+            elapsed += 5
+            icon = animations[(elapsed // 5) % len(animations)]
+            progress_msg.content = f"{icon} **Generazione rendering in corso...**\n\n⏳ Elaborazione in corso... ({elapsed}s)"
+            await progress_msg.update()
+            logger.info(f"Keepalive: {elapsed}s trascorsi")
+
+        # Ottieni il risultato (solleva eccezione se la task è fallita)
+        rendered_image = generation_task.result()
+
+        logger.info(f"Immagine ricevuta: {len(rendered_image)} bytes")
+
+        # Aggiorna messaggio progresso
+        progress_msg.content = f"✅ **Rendering completato!** ({len(rendered_image) // 1024} KB generati in ~{elapsed}s)"
+        await progress_msg.update()
 
         # Salva immagine generata in file temporaneo
         import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
             f.write(rendered_image)
             temp_path = f.name
 
-        # Aggiorna status
-        status.content = "✅ **Rendering completato!**"
-        await status.update()
+        logger.info(f"Immagine salvata in {temp_path}")
 
         # Mostra risultato
         await cl.Message(
@@ -432,26 +458,42 @@ Dimmi cosa ne pensi!
         cl.user_session.set("state", SessionState.GENERATED)
 
     except Exception as e:
-        logger.error(f"Errore generazione rendering: {type(e).__name__}: {e}")
-        await cl.Message(content=f"❌ **Errore nella generazione:**\n\n{str(e)}\n\nRiprova o contatta il supporto.").send()
+        error_msg = f"{type(e).__name__}: {e}"
+        logger.error(f"Errore generazione rendering: {error_msg}")
+        import traceback
+        logger.error(traceback.format_exc())
+
+        # Aggiorna il messaggio di progresso con l'errore
+        progress_msg.content = f"❌ **Errore nella generazione:**\n\n`{error_msg}`\n\nRiprova o contatta il supporto."
+        await progress_msg.update()
 
 
 async def refine_current_rendering(service: GeminiImageService, feedback: str):
     """Raffina il rendering corrente basandosi sul feedback."""
 
-    status = await cl.Message(content=f"🔄 **Modificando il rendering...**\n\n*{feedback}*").send()
+    progress_msg = await cl.Message(content=f"🔄 **Modificando il rendering...**\n\n*{feedback}*").send()
 
     try:
-        refined_image = await service.refine_rendering(feedback)
+        # Lancia la raffinazione come task asincrono con keepalive
+        refine_task = asyncio.create_task(service.refine_rendering(feedback))
+
+        elapsed = 0
+        while not refine_task.done():
+            await asyncio.sleep(5)
+            elapsed += 5
+            progress_msg.content = f"🔄 **Modificando il rendering...**\n\n*{feedback}*\n\n⏳ Elaborazione... ({elapsed}s)"
+            await progress_msg.update()
+
+        refined_image = refine_task.result()
 
         # Salva immagine
         import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
             f.write(refined_image)
             temp_path = f.name
 
-        status.content = "✅ **Modifica completata!**"
-        await status.update()
+        progress_msg.content = "✅ **Modifica completata!**"
+        await progress_msg.update()
 
         await cl.Message(
             content="🌿 **Ecco il rendering aggiornato:**",
@@ -461,7 +503,12 @@ async def refine_current_rendering(service: GeminiImageService, feedback: str):
         ).send()
 
     except Exception as e:
-        await cl.Message(content=f"❌ Errore nella modifica: {e}").send()
+        error_msg = f"{type(e).__name__}: {e}"
+        logger.error(f"Errore raffinazione: {error_msg}")
+        import traceback
+        logger.error(traceback.format_exc())
+        progress_msg.content = f"❌ **Errore nella modifica:**\n\n`{error_msg}`"
+        await progress_msg.update()
 
 
 # =============================================================================
