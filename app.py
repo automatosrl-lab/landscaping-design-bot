@@ -3,7 +3,7 @@ Landscaping Design Bot - Applicazione Chainlit
 
 Chatbot AI per garden design con rendering automatico.
 Usa SOLO Gemini per:
-- Chat (Gemini 2.5 Flash)
+- Chat (Gemini 2.5 Flash - GA stabile)
 - Image Generation/Editing (Gemini 2.5 Flash Image / Nano Banana)
 
 Il sistema modifica SOLO il landscape preservando casa e strutture.
