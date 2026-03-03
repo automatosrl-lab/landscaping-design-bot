@@ -17,7 +17,10 @@ from google import genai
 from google.genai import types
 import base64
 import httpx
+import logging
 from typing import Optional, List
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiImageService:
@@ -186,6 +189,55 @@ Quando il cliente carica una foto, la analizzi e proponi miglioramenti.
         return response_text
 
     # =========================================================================
+    # RESPONSE HELPERS
+    # =========================================================================
+
+    def _extract_image_from_response(self, response) -> bytes:
+        """Estrai immagine dalla risposta Gemini con error handling robusto."""
+        if not response.candidates:
+            # Controlla se c'è un motivo di blocco
+            block_reason = getattr(response, 'prompt_feedback', None)
+            logger.error(f"Nessun candidato nella risposta. Feedback: {block_reason}")
+            raise ValueError(
+                "Il modello non ha generato una risposta. "
+                "L'immagine potrebbe essere stata bloccata dal filtro di sicurezza."
+            )
+
+        candidate = response.candidates[0]
+
+        # Controlla finish_reason per capire perché non c'è immagine
+        finish_reason = getattr(candidate, 'finish_reason', None)
+        if finish_reason and str(finish_reason) not in ('STOP', 'FinishReason.STOP', '0'):
+            logger.error(f"Generazione terminata con motivo: {finish_reason}")
+            raise ValueError(
+                f"La generazione è stata interrotta: {finish_reason}. "
+                "Prova con una richiesta diversa."
+            )
+
+        if not candidate.content or not candidate.content.parts:
+            logger.error(f"Risposta senza contenuto. Finish reason: {finish_reason}")
+            raise ValueError(
+                "Il modello ha risposto ma senza generare un'immagine. "
+                "Potrebbe essere un problema di quota o il contenuto è stato filtrato."
+            )
+
+        # Cerca immagine nelle parti
+        for part in candidate.content.parts:
+            if part.inline_data and part.inline_data.data:
+                return part.inline_data.data
+
+        # Se arriviamo qui, c'è testo ma nessuna immagine
+        text_parts = [p.text for p in candidate.content.parts if hasattr(p, 'text') and p.text]
+        if text_parts:
+            logger.warning(f"Risposta solo testo: {text_parts[0][:200]}")
+            raise ValueError(
+                f"Il modello ha risposto con testo invece che un'immagine: "
+                f"{text_parts[0][:150]}..."
+            )
+
+        raise ValueError("Nessuna immagine trovata nella risposta del modello.")
+
+    # =========================================================================
     # IMAGE EDITING METHODS
     # =========================================================================
 
@@ -260,12 +312,9 @@ Il rendering deve essere fotorealistico, come una foto professionale scattata co
         )
 
         # Estrai immagine dalla risposta
-        for part in response.candidates[0].content.parts:
-            if part.inline_data and part.inline_data.data:
-                self.current_image = part.inline_data.data
-                return part.inline_data.data
-
-        raise ValueError("Nessuna immagine generata nella risposta")
+        image_data_result = self._extract_image_from_response(response)
+        self.current_image = image_data_result
+        return image_data_result
 
     async def refine_rendering(self, feedback: str) -> bytes:
         """
@@ -298,12 +347,9 @@ IMPORTANTE:
         )
 
         # Estrai immagine
-        for part in response.candidates[0].content.parts:
-            if part.inline_data and part.inline_data.data:
-                self.current_image = part.inline_data.data
-                return part.inline_data.data
-
-        raise ValueError("Nessuna immagine generata")
+        image_data_result = self._extract_image_from_response(response)
+        self.current_image = image_data_result
+        return image_data_result
 
     async def analyze_garden(self, image_data: bytes) -> dict:
         """
