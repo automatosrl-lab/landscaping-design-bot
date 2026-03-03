@@ -10,8 +10,8 @@ __pycache__/
 venv/
 ENV/
 
-# Chainlit - let it auto-generate config
-.chainlit/
+# Chainlit - track config, ignore auto-generated files
+.chainlit/translations/
 .files/
 
 # IDE

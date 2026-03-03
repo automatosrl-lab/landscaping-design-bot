@@ -114,7 +114,7 @@ async def on_message(message: cl.Message):
     image_data = None
     if message.elements:
         for element in message.elements:
-            if isinstance(element, cl.Image):
+            if hasattr(element, "mime") and element.mime and "image" in element.mime:
                 with open(element.path, "rb") as f:
                     image_data = f.read()
                 cl.user_session.set("uploaded_image", image_data)
