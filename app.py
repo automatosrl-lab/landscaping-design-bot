@@ -11,10 +11,14 @@ Il sistema modifica SOLO il landscape preservando casa e strutture.
 
 import chainlit as cl
 import os
+import logging
 from dotenv import load_dotenv
 from typing import Optional
 import base64
 import io
+from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 # Carica variabili ambiente
 load_dotenv()
@@ -27,6 +31,41 @@ from services.gemini_image_service import GeminiImageService
 # =============================================================================
 
 gemini_service: Optional[GeminiImageService] = None
+
+MAX_IMAGE_SIZE = 1600  # px lato lungo
+MAX_IMAGE_BYTES = 1_500_000  # ~1.5MB
+
+
+def compress_image(image_data: bytes) -> bytes:
+    """Ridimensiona e comprimi l'immagine per evitare payload troppo grandi."""
+    img = Image.open(io.BytesIO(image_data))
+
+    # Converti RGBA/palette in RGB
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
+
+    # Ridimensiona se troppo grande
+    w, h = img.size
+    if max(w, h) > MAX_IMAGE_SIZE:
+        ratio = MAX_IMAGE_SIZE / max(w, h)
+        new_size = (int(w * ratio), int(h * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+        logger.info(f"Immagine ridimensionata: {w}x{h} -> {new_size[0]}x{new_size[1]}")
+
+    # Comprimi come JPEG
+    buffer = io.BytesIO()
+    quality = 85
+    img.save(buffer, format="JPEG", quality=quality, optimize=True)
+
+    # Se ancora troppo grande, riduci qualità
+    while buffer.tell() > MAX_IMAGE_BYTES and quality > 40:
+        quality -= 10
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG", quality=quality, optimize=True)
+
+    result = buffer.getvalue()
+    logger.info(f"Immagine compressa: {len(image_data)} -> {len(result)} bytes (quality={quality})")
+    return result
 
 
 def get_service() -> GeminiImageService:
@@ -68,7 +107,7 @@ async def on_chat_start():
         service.reset_session()
     except ValueError as e:
         await cl.Message(
-            content=f"⚠️ Errore di configurazione: {e}\n\nConfigura GOOGLE_API_KEY nel file .env"
+            content=f"⚠️ Errore di configurazione: {e}\n\nConfigura OPENROUTER_API_KEY nelle variabili ambiente."
         ).send()
         return
 
@@ -116,7 +155,9 @@ async def on_message(message: cl.Message):
         for element in message.elements:
             if hasattr(element, "mime") and element.mime and "image" in element.mime:
                 with open(element.path, "rb") as f:
-                    image_data = f.read()
+                    raw_data = f.read()
+                # Comprimi per evitare payload troppo grandi
+                image_data = compress_image(raw_data)
                 cl.user_session.set("uploaded_image", image_data)
                 break
 
@@ -344,10 +385,11 @@ async def generate_rendering():
         additional += f"\n\nRichiesta originale del cliente: {user_description}"
 
     # Status message
-    status = await cl.Message(content="🎨 **Generazione rendering in corso...**\n\nSto trasformando il tuo giardino mantenendo la casa e le strutture esistenti...").send()
+    logger.info(f"Avvio generazione: style={style}, elements={elements}, image_size={len(image_data)} bytes")
+    status = await cl.Message(content="🎨 **Generazione rendering in corso...**\n\nSto trasformando il tuo giardino mantenendo la casa e le strutture esistenti.\n\n⏱️ Potrebbe richiedere fino a 60 secondi...").send()
 
     try:
-        # Genera con Gemini Image
+        # Genera con OpenRouter + Nano Banana Pro
         rendered_image = await service.generate_landscape_rendering(
             image_data=image_data,
             style=style,
@@ -390,6 +432,7 @@ Dimmi cosa ne pensi!
         cl.user_session.set("state", SessionState.GENERATED)
 
     except Exception as e:
+        logger.error(f"Errore generazione rendering: {type(e).__name__}: {e}")
         await cl.Message(content=f"❌ **Errore nella generazione:**\n\n{str(e)}\n\nRiprova o contatta il supporto.").send()
 
 
